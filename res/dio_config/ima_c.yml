@@ -1,0 +1,56 @@
+type: io_module
+model: IMA_C
+register_type: holding
+
+description: >
+  Simulates the IMA_C IO module.
+  - Digital Inputs: DIn01~DIn04 mapped to bit 0~3 of holding register 2
+  - Digital Outputs: DOut01~DOut02 mapped to bit 0~1 of holding register 3
+  - Bypass status stored in holding register 4
+
+pins:
+  # Digital Inputs (read-only)
+  - name: DIn01
+    offset: 2
+    bit: 0
+    profile:
+      type: constant
+      value: 0
+
+  - name: DIn02
+    offset: 2
+    bit: 1
+    profile:
+      type: constant
+      value: 1
+
+  - name: DIn03
+    offset: 2
+    bit: 2
+    profile:
+      type: toggle
+      interval: 5
+
+  - name: DIn04
+    offset: 2
+    bit: 3
+    profile:
+      type: pulse
+      high_time: 3    # ON 3s
+      low_time: 2     # OFF 2s
+
+  # Digital Outputs (read/write)
+  - name: DOut01
+    offset: 3
+    bit: 0
+
+  - name: DOut02
+    offset: 3
+    bit: 1
+
+  # Bypass (read-only full register)
+  - name: ByPass
+    offset: 4
+    profile:
+      type: constant
+      value: 0

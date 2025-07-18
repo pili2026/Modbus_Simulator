@@ -1,0 +1,62 @@
+type: io_module
+model: 8_Pin_DI
+register_type: holding
+
+description: >
+  Simulates an 8-channel Digital Input (DI) module.
+  Each pin can be configured with different profile types:
+  - constant: always ON or OFF
+  - toggle: flip ON/OFF at fixed interval
+  - pulse: ON for high_time seconds, OFF for low_time seconds
+
+pins:
+  - name: DI01
+    offset: 0
+    profile:
+      type: constant
+      value: 1         # Always ON
+
+  - name: DI02
+    offset: 1
+    profile:
+      type: constant
+      value: 0         # Always OFF
+
+  - name: DI03
+    offset: 2
+    profile:
+      type: toggle
+      interval: 2      # Flip every 2 seconds
+
+  - name: DI04
+    offset: 3
+    profile:
+      type: toggle
+      interval: 5      # Flip every 5 seconds
+
+  - name: DI05
+    offset: 4
+    profile:
+      type: pulse
+      high_time: 3     # ON for 3 seconds
+      low_time: 7      # OFF for 7 seconds
+
+  - name: DI06
+    offset: 5
+    profile:
+      type: pulse
+      high_time: 1     # ON for 1 second
+      low_time: 1      # OFF for 1 second
+
+  - name: DI07
+    offset: 6
+    profile:
+      type: constant
+      value: 1         # Always ON
+
+  - name: DI08
+    offset: 7
+    profile:
+      type: toggle
+      interval: 1      # Flip every second
+

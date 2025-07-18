@@ -1,0 +1,31 @@
+devices:
+  - id: LITEON_EVO6800
+    serial_port: /tmp/ttyV1
+    slave_id: 1
+    model_file: vfd_config/liteon.yml
+
+  - id: TECO_F510
+    serial_port: /tmp/ttyV1
+    slave_id: 2
+    model_file: vfd_config/teco.yml
+
+  - id: SD400
+    serial_port: /tmp/ttyV1
+    slave_id: 3
+    model_file: ai_config/ai_16_pin_module_fc03.yml
+
+  - id: SD500
+    serial_port: /tmp/ttyV1
+    slave_id: 4
+    model_file: dio_config/di_16_pin_module.yml
+
+  - id: IMA_C
+    serial_port: /tmp/ttyV1
+    slave_id: 5
+    model_file: dio_config/ima_c.yml
+
+  - id: ADAM--4117
+    serial_port: /tmp/ttyV1
+    slave_id: 6
+    model_file: ai_config/ai_8_pin_module_fc03.yml
+

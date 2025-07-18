@@ -1,0 +1,112 @@
+type: io_module
+model: 16_Pin_DI
+register_type: holding
+
+description: >
+  Simulates a 16-channel Digital Input (DI) module.
+  Each pin can be configured with different profile types:
+  - constant: always ON or OFF
+  - toggle: flip ON/OFF at fixed interval
+  - pulse: ON for high_time seconds, OFF for low_time seconds
+
+pins:
+  - name: DI01
+    offset: 0
+    profile:
+      type: constant
+      value: 1         # Always ON
+
+  - name: DI02
+    offset: 1
+    profile:
+      type: constant
+      value: 0         # Always OFF
+
+  - name: DI03
+    offset: 2
+    profile:
+      type: toggle
+      interval: 2      # Flip every 2 seconds
+
+  - name: DI04
+    offset: 3
+    profile:
+      type: toggle
+      interval: 5      # Flip every 5 seconds
+
+  - name: DI05
+    offset: 4
+    profile:
+      type: pulse
+      high_time: 3     # ON for 3 seconds
+      low_time: 7      # OFF for 7 seconds
+
+  - name: DI06
+    offset: 5
+    profile:
+      type: pulse
+      high_time: 1     # ON for 1 second
+      low_time: 1      # OFF for 1 second
+
+  - name: DI07
+    offset: 6
+    profile:
+      type: constant
+      value: 1         # Always ON
+
+  - name: DI08
+    offset: 7
+    profile:
+      type: toggle
+      interval: 1      # Flip every second
+
+  - name: DI09
+    offset: 8
+    profile:
+      type: toggle
+      interval: 10     # Flip every 10 seconds
+
+  - name: DI10
+    offset: 9
+    profile:
+      type: pulse
+      high_time: 2     # ON for 2 seconds
+      low_time: 4      # OFF for 4 seconds
+
+  - name: DI11
+    offset: 10
+    profile:
+      type: pulse
+      high_time: 5     # ON for 5 seconds
+      low_time: 2      # OFF for 2 seconds
+
+  - name: DI12
+    offset: 11
+    profile:
+      type: constant
+      value: 0         # Always OFF
+
+  - name: DI13
+    offset: 12
+    profile:
+      type: toggle
+      interval: 3      # Flip every 3 seconds
+
+  - name: DI14
+    offset: 13
+    profile:
+      type: constant
+      value: 1         # Always ON
+
+  - name: DI15
+    offset: 14
+    profile:
+      type: pulse
+      high_time: 6     # ON for 6 seconds
+      low_time: 6      # OFF for 6 seconds
+
+  - name: DI16
+    offset: 15
+    profile:
+      type: toggle
+      interval: 0.5    # Flip every 0.5 seconds

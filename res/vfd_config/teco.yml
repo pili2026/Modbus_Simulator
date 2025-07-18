@@ -1,0 +1,34 @@
+type: inverter
+model: TECO_F510
+register_type: holding
+# register_type: input
+log_mode: decoded          # Can be 'decoded' or 'raw'
+kwh_mode: double_word      # Simulate kWh using two words (low + high)
+
+description: >
+  Simulates the TECO F510 inverter.
+  Includes output frequency, command frequency, run/stop control, error code, and kWh simulation.
+  Suitable for RS-485 environments with multi-slave support.
+
+register_mapping:
+  output_hz: 9508        # Actual output frequency (Hz x100)
+  command_hz: 9474       # Command frequency setting (Hz x100)
+  on_off: 9473           # Run/Stop control (1 = Run, 0 = Stop)
+  reset: 9473            # Trigger reset by writing 9
+  error: 9505            # Error code
+  voltage: 3091          # Voltage (x10)
+  current: 3090          # Current (x10)
+  kw: 3093               # Power (x10)
+  inv_status: 9504       # Status (0: Stopped, 1: Running)
+  kwh_low: 3139          # kWh (x10)
+
+initial_registers:
+  "3139": 123            # kWh = 12.3 kWh
+  "3091": 2200           # Voltage = 220.0 V
+  "3090": 150            # Current = 15.0 A
+  "3093": 350            # Power = 35.0 kW
+  "9508": 6000           # Output frequency = 60.00 Hz
+  "9474": 6000           # Command frequency = 60.00 Hz
+  "9473": 1              # ON (Running)
+  "9505": 0              # No error
+  "9504": 1              # Status = Running

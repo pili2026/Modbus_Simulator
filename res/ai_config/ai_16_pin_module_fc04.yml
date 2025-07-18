@@ -1,0 +1,197 @@
+type: io_module
+model: 16_Pin_AI
+register_type: input
+description: 16-channel AI
+
+pins:
+  - name: Temp_Inlet
+    offset: 0
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 2048  # 25.00°C
+    profile:
+      type: ramp
+      step: 64
+      min: 819
+      max: 4095
+
+  - name: Temp_Outlet
+    offset: 1
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 2245  # 27.43°C
+    profile:
+      type: ramp
+      step: 128
+      min: 819
+      max: 4095
+
+  - name: Pressure_Line
+    offset: 2
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 819  # 5.00 bar
+    profile:
+      type: ramp
+      step: 64
+      min: 819
+      max: 4095
+
+  - name: Pressure_Tank
+    offset: 3
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 819  # 5.00 bar
+    profile:
+      type: wave
+      period: 20
+      amplitude: 410
+      base: 2457  # 15.00 bar
+
+  - name: Humidity_Sensor
+    offset: 4
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 819  # 31.98%RH
+    profile:
+      type: wave
+      period: 30
+      amplitude: 819
+      base: 2457  # 95.98%RH
+
+  - name: Current_Sensor
+    offset: 5
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1129  # 1129 A
+    profile:
+      type: ramp
+      step: 64
+      min: 819
+      max: 4095
+
+  - name: Voltage_Sensor
+    offset: 6
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1958  # 764 V
+    profile:
+      type: wave
+      period: 40
+      amplitude: 614
+      base: 2457  # 960 V
+
+  - name: CO2_Sensor
+    offset: 7
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 819  # 8.19% CO₂
+    profile:
+      type: ramp
+      step: 64
+      min: 819
+      max: 4095
+
+  - name: PM2_5_Sensor
+    offset: 8
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1221  # 244.2 μg/m³
+    profile:
+      type: ramp
+      step: 128
+      min: 819
+      max: 3272
+
+  - name: PM10_Sensor
+    offset: 9
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1632  # 326.4 μg/m³
+    profile:
+      type: wave
+      period: 25
+      amplitude: 655
+      base: 2457  # 491.4 μg/m³
+
+  - name: Light_Sensor
+    offset: 10
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 2457  # 982.8 lux
+    profile:
+      type: ramp
+      step: 128
+      min: 819
+      max: 4095
+
+  - name: Noise_Level
+    offset: 11
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1632  # 193.2 dB
+    profile:
+      type: wave
+      period: 15
+      amplitude: 327
+      base: 1632  # 193.2 dB
+
+  - name: Vibration_X
+    offset: 12
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 2869  # 28.69 mm/s²
+    profile:
+      type: ramp
+      step: 128
+      min: 819
+      max: 4095
+
+  - name: Vibration_Y
+    offset: 13
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 942  # 9.42 mm/s²
+    profile:
+      type: wave
+      period: 18
+      amplitude: 573
+      base: 2457  # 24.57 mm/s²
+
+  - name: Vibration_Z
+    offset: 14
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 1221  # 12.21 mm/s²
+    profile:
+      type: ramp
+      step: 64
+      min: 819
+      max: 2048
+
+  - name: AI_Spare
+    offset: 15
+    n1: 0
+    n2: 1
+    n3: 0
+    value: 2048  # 2048 (no unit)
+    profile:
+      type: wave
+      period: 35
+      amplitude: 491
+      base: 2048

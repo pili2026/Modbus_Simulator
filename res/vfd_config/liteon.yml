@@ -1,0 +1,33 @@
+type: inverter
+model: LITEON_EVO6800
+# register_type: input
+register_type: holding
+log_mode: decoded          # Can be 'decoded' or 'raw'
+kwh_mode: double_word      # Simulate kWh using two words (low + high)
+
+description: >
+  Simulates the LITEON EVO6800 inverter.
+  Includes output frequency, command frequency, run/stop control, error code, and kWh simulation.
+  Suitable for RS-485 environments with multi-slave support.
+
+register_mapping:
+  output_hz: 9251          # Actual output frequency (Hz * 100)
+  command_hz: 9218         # Command frequency setting (Hz * 100)
+  on_off: 9217             # Run/Stop control, 1=Run, 0=Stop
+  reset: 9217              # Trigger reset by writing 9 (shared register)
+  error: 9256              # Error code
+  kwh_low: 7688            # kWh low word
+  kwh_high: 7689           # kWh high word
+
+initial_registers:
+  "7688": 123             # KWH low word (actual value: 1.23 kWh)
+  "7689": 0               # KWH high word
+  "9253": 2200            # Voltage 220.0V
+  "9252": 105             # Current 1.05A
+  "7431": 350             # Power 0.35kW
+  "9251": 6000            # Actual frequency 60.00Hz
+  "9256": 0               # Error code
+  "9255": 0               # Warning code
+  "9249": 1               # Status
+  "9218": 6000            # Command frequency 60.00Hz
+  "9217": 1               # Currently ON
