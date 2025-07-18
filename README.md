@@ -165,7 +165,7 @@ This script:
 ./bin/run_socat_with_simulator.sh
 ```
 
-3. In another terminal, use your Modbus master to test against `/tmp/ttyV1`:
+3. *(Optional)* In another terminal, use your Modbus master to test against `/tmp/ttyV1`:
 
 ```bash
 modpoll -m rtu -b 9600 -p none -d 8 -s 1 -a 1 -r 0 -c 4 /tmp/ttyV1
