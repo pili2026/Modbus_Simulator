@@ -34,6 +34,8 @@ class GenericModbusSimulator:
 
     def _start_inverter_logic(self):
         model = self.config.get("model", "")
+        device_id = self.config.get("device_id", "Unknown")
+
         fx = FC_CODE_MAP["hr"]
         mapping = self.config.get("register_mapping", {})
         on_off_addr = mapping.get("on_off")
@@ -54,7 +56,7 @@ class GenericModbusSimulator:
                     current_out = max(0, min(cmd_hz, current_out))
 
                     self.context.setValues(fx, out_hz_addr, [current_out])
-                    simulate_log(f"[{model}] ON={on_off}, CMD={cmd_hz}, OUT={current_out}")
+                    simulate_log(f"[{device_id}][{model}] ON={on_off}, CMD={cmd_hz}, OUT={current_out}")
                     time.sleep(1)
                 except Exception as e:
                     simulate_log(f"[ERROR] {model} loop error: {e}")

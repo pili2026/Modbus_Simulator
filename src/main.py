@@ -1,5 +1,3 @@
-# simulator_runner.py
-
 import os
 import threading
 from collections import defaultdict
@@ -27,11 +25,14 @@ def load_all_devices(device_config_path, model_base_dir):
         model_path = os.path.join(model_base_dir, device["model_file"])
         model_config = load_yaml(model_path)
 
+        slave_id = device["slave_id"]
+        device_id = device["id"]
+        model_config["device_id"] = f"{device_id}_{slave_id}"
+
         simulator = GenericModbusSimulator(model_config)
         slave_context = simulator.build_context()
 
         port = device["serial_port"]
-        slave_id = device["slave_id"]
 
         port_slave_map[port][slave_id] = slave_context
 

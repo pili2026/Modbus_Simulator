@@ -111,12 +111,12 @@ A typical virtual serial link created by `socat` looks like this:
 
 ```text
     +-------------------+           +-------------------+
-    |   /tmp/ttyV0      | <=======> |     /tmp/ttyV1    |
+    |   /tmp/ttyV1      | <=======> |     /tmp/ttyV0    |
     | (Simulator port)  |           |  (Master testing) |
     +-------------------+           +-------------------+
 ```
 
-* The simulator binds to `/tmp/ttyV0`
+* The simulator binds to `/tmp/ttyV1`
 * Your testing tool (e.g., `modpoll`, `minimalmodbus`, etc.) connects to `/tmp/ttyV1`
 
 ---

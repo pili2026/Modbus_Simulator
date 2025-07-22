@@ -15,6 +15,7 @@ class ProfileUpdater:
         t = 0
         model = self.config.get("model", "")
         pin_list = self.config.get("pins", [])
+        device_id = self.config.get("device_id", "Unknown")
 
         def _loop():
             nonlocal t
@@ -38,7 +39,9 @@ class ProfileUpdater:
                         origin_val = values[0]
                         if bit is not None:
                             val = (origin_val >> bit) & 1
-                            self._log(f"[{model}] [DOut monitor] {name} (addr={addr}, bit={bit}) ← master_val={val}")
+                            self._log(
+                                f"[{device_id}][{model}] [DOut monitor] {name} (addr={addr}, bit={bit}) ← master_val={val}"
+                            )
                         continue
 
                     # No profile defined, skip
@@ -58,12 +61,16 @@ class ProfileUpdater:
                         mask = 1 << bit
                         new_val = (origin_val & ~mask) | ((val << bit) & mask)
                         self.context.setValues(fx_code, addr, [new_val])
-                        self._log(f"[{model}] {name} (addr={addr}, bit={bit}, t={t}) val={val} → raw={new_val}")
+                        self._log(
+                            f"[{device_id}][{model}] {name} (addr={addr}, bit={bit}, t={t}) val={val} → raw={new_val}"
+                        )
                     else:
                         # Full-register write (e.g., ByPass)
                         self.context.setValues(fx_code, addr, [val])
                         decoded_val = self._decode_value(val, n1, n2, n3)
-                        self._log(f"[{model}] {name} (addr={addr}, t={t}) raw={val} → value={decoded_val:.2f}")
+                        self._log(
+                            f"[{device_id}][{model}] {name} (addr={addr}, t={t}) raw={val} → value={decoded_val:.2f}"
+                        )
                 t += 1
                 time.sleep(interval_sec)
 

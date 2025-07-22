@@ -21,6 +21,7 @@ register_mapping:
   kw: 3093               # Power (x10)
   inv_status: 9504       # Status (0: Stopped, 1: Running)
   kwh_low: 3139          # kWh (x10)
+  alert: 9512            # Alert status (0: No alert, 1: Alert)
 
 initial_registers:
   "3139": 123            # kWh = 12.3 kWh
@@ -32,3 +33,4 @@ initial_registers:
   "9473": 1              # ON (Running)
   "9505": 0              # No error
   "9504": 1              # Status = Running
+  "9512": 0              # No alert
