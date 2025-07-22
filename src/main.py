@@ -1,3 +1,4 @@
+import argparse
 import os
 import threading
 from collections import defaultdict
@@ -14,7 +15,7 @@ def load_yaml(file_path):
         return yaml.safe_load(f)
 
 
-def load_all_devices(device_config_path, model_base_dir):
+def load_all_devices(device_config_path: str, model_base_dir: str) -> dict:
     device_data = load_yaml(device_config_path)
     devices = device_data.get("devices", [])
 
@@ -46,10 +47,18 @@ def start_server_for_port(port, slave_context_map):
 
 
 def main():
-    device_config_path = "./res/modbus_device.yml"
-    model_base_dir = "./res"
+    parser = argparse.ArgumentParser(description="Run Modbus RTU Simulator")
+    parser.add_argument(
+        "--config",
+        "-c",
+        default="./res/modbus_device.yml",
+        help="Path to device config YAML file (default: ./res/modbus_device.yml)",
+    )
+    parser.add_argument("--model-dir", "-m", default="./res", help="Base directory for model files (default: ./res)")
 
-    port_slave_map = load_all_devices(device_config_path, model_base_dir)
+    args = parser.parse_args()
+
+    port_slave_map = load_all_devices(args.config, args.model_dir)
 
     threads = []
     for port, slave_map in port_slave_map.items():

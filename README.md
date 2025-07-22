@@ -135,10 +135,14 @@ Starts only the virtual RS485 port pair:
 
 Use this if you want to run the simulator separately (e.g., inside an IDE or debugger).
 
-After `socat` is running, you can launch the simulator with:
+After socat is running, you can launch the simulator manually using the default config:
 
 ```bash
 python3 src/main.py
+```
+Or specify a custom config file:
+```bash
+python3 src/main.py --config ./custom/device_config.yml --model-dir ./custom/models
 ```
 
 #### 2. `run_socat_with_simulator.sh`
@@ -148,11 +152,19 @@ Starts both `socat` and the device simulator together:
 ```bash
 ./bin/run_socat_with_simulator.sh
 ```
+Or with custom config and model directory:
+```bash
+./bin/run_socat_with_simulator.sh --config ./custom/devices.yml --model-dir ./custom/models
+```
 
 This script:
 
 * Launches a virtual port pair (e.g., `/tmp/ttyV0` ↔ `/tmp/ttyV1`)
 * Starts the simulator based on the `modbus_device.yml` configuration
+  
+> ℹ️ Note: If you want to use a custom device config or model directory, you will need to either:
+> Modify the script to pass --config and --model-dir, or
+> Run the simulator manually as shown above.
 
 ---
 
