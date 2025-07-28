@@ -6,7 +6,7 @@ from pymodbus.datastore import ModbusSlaveContext
 from base.modbus_context_builder import ModbusContextBuilder
 from simulator.profile_updater import ProfileUpdater
 from utils.constants import FC_CODE_MAP
-from utils.value_formatter import simulate_log
+from utils.log_formatter import simulate_log
 
 
 class GenericModbusSimulator:
@@ -50,9 +50,9 @@ class GenericModbusSimulator:
                     current_out = self.context.getValues(fx, out_hz_addr, count=1)[0]
 
                     if on_off == 1 and current_out < cmd_hz:
-                        current_out += 10
+                        current_out += 100
                     elif on_off == 0 and current_out > 0:
-                        current_out -= 10
+                        current_out -= 100
                     current_out = max(0, min(cmd_hz, current_out))
 
                     self.context.setValues(fx, out_hz_addr, [current_out])
