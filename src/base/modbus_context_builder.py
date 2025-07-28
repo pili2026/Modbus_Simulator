@@ -67,4 +67,10 @@ class ModbusContextBuilder:
         """Reverse compute raw value from scaled value using n1, n2, n3."""
         if n3 != 0:
             raise NotImplementedError("Quadratic decoding not supported.")
-        return int(round((value - n1) / n2))
+        raw = int(round((value - n1) / n2))
+
+        # Ensure raw is treated as unsigned 16-bit
+        if raw < 0:
+            raw = raw + 0x10000  # 2's complement
+
+        return raw
