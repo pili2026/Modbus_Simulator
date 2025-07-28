@@ -93,12 +93,24 @@ class ProfileUpdater:
     def _update_suto_flow(self, fx_code: int):
         pins = {p.get("name"): p for p in self.config.get("pins", [])}
 
-        flow_pin = pins.get("FLOW_FLOW")
         consumption_pin = pins.get("FLOW_CONSUMPTION")
         rev_pin = pins.get("FLOW_REVCONSUMPTION")
         direction_pin = pins.get("FLOW_DIRECTION")
 
-        if consumption_pin:
+        # Ensure FLOW_DIRECTION is defined
+        if not direction_pin:
+            self._log(f"[{self.config.get('device_id')}] FLOW_DIRECTION not defined, skipping update.")
+            return
+
+        direction_addr = int(direction_pin["offset"])
+        direction_vals = self.context.getValues(fx_code, direction_addr, count=1)
+        if not direction_vals:
+            self._log(f"[WARN] FLOW_DIRECTION read failed at addr={direction_addr}")
+            return
+        direction = direction_vals[0]
+
+        # If direction is forward (1), increment FLOW_CONSUMPTION
+        if direction == 1 and consumption_pin:
             addr = int(consumption_pin["offset"])
             val = self.context.getValues(fx_code, addr, count=2)
             if not val or len(val) < 2:
@@ -109,26 +121,17 @@ class ProfileUpdater:
             self.context.setValues(fx_code, addr, self._encode_uint32_le(value))
             self._log(f"[{self.config.get('device_id')}] FLOW_CONSUMPTION +=1 → {value}")
 
-        if rev_pin:
+        # If direction is reverse (-1), increment FLOW_REVCONSUMPTION
+        elif direction == -1 and rev_pin:
             addr = int(rev_pin["offset"])
             val = self.context.getValues(fx_code, addr, count=2)
             if not val or len(val) < 2:
                 self._log(f"[WARN] FLOW_REVCONSUMPTION read failed at addr={addr}")
                 return
             value = self._decode_uint32_le(val)
+            value += 1
             self.context.setValues(fx_code, addr, self._encode_uint32_le(value))
-
-        if flow_pin and direction_pin:
-            flow_addr = int(flow_pin["offset"])
-            flow_raw = self.context.getValues(fx_code, flow_addr, count=2)
-            if not flow_raw or len(flow_raw) < 2:
-                self._log(f"[WARN] FLOW_FLOW read failed at addr={flow_addr}")
-                return
-            flow_val = self._decode_float(flow_raw)
-            direction = 1 if flow_val % 2 < 1 else 0
-            direction_addr = int(direction_pin["offset"])
-            self.context.setValues(fx_code, direction_addr, [direction])
-            self._log(f"[{self.config.get('device_id')}] FLOW_DIRECTION ← {direction}")
+            self._log(f"[{self.config.get('device_id')}] FLOW_REVCONSUMPTION +=1 → {value}")
 
     def _generate_value_from_profile(self, profile, t, fx_code, addr, pin_type=None):
         ptype = profile.get("type")

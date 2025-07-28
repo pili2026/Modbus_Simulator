@@ -23,4 +23,4 @@ pins:
 
   - name: FLOW_DIRECTION
     offset: 42
-    value: 1
+    value: 1 # Forward flow  1 is forward, -1 is reverse
