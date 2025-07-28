@@ -28,7 +28,7 @@ class ProfileUpdater:
 
         # Initialize all pin-level and device-level logic handlers
         self.pin_handlers = [DOutMonitorHandler()]
-        self.device_handlers = [SutoFlowHandler(context, config, self._log)]
+        self.device_handlers = [SutoFlowHandler(context, config)]
 
     def start(self, fx_code: int, base_address: int = 0, interval_sec: float = 1.0):
         """

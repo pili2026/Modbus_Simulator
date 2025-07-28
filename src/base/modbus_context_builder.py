@@ -41,11 +41,17 @@ class ModbusContextBuilder:
                 addr = base_addr + int(offset)
                 self.max_addr = max(self.max_addr, addr)
                 raw_value = pin.get("value")
+
                 if raw_value is not None:
                     n1 = float(pin.get("n1", 0))
                     n2 = float(pin.get("n2", 1))
                     n3 = float(pin.get("n3", 0))
                     val = self._compute_raw_from_value(raw_value, n1, n2, n3)
+
+                    # Ensure raw_value is treated as unsigned 16-bit if it's an int
+                    if isinstance(raw_value, int) and raw_value < 0:
+                        val &= 0xFFFF  # Convert to uint16
+
                     result[addr] = val
 
                 profile = pin.get("profile", {})

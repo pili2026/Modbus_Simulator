@@ -1,13 +1,14 @@
 import struct
 
 from base.base_device_handler import BaseDeviceHandler
+from utils.log_formatter import simulate_log
 
 
 class SutoFlowHandler(BaseDeviceHandler):
-    def __init__(self, context, config: dict, logger=print):
+    def __init__(self, context, config: dict):
         self.context = context
         self.config = config
-        self.logger = logger
+        self.logger = simulate_log
 
     def handle(self, fx_code: int):
         if self.config.get("model") != "SUTO_FLOW":
@@ -28,7 +29,15 @@ class SutoFlowHandler(BaseDeviceHandler):
             self._log(f"FLOW_DIRECTION read failed at addr={direction_addr}")
             return
 
-        direction = direction_vals[0]
+        direction_raw = direction_vals[0]
+
+        if not (0 <= direction_raw <= 0xFFFF):
+            self._log(f"[ERROR] Invalid raw direction value: {direction_raw}")
+            return
+
+        direction = struct.unpack("<h", struct.pack("<H", direction_raw))[0]
+        self._log(f"FLOW_DIRECTION raw={direction_raw} → signed={direction}")
+
         if direction == 1 and consumption_pin:
             self._increment_counter(consumption_pin, fx_code, "FLOW_CONSUMPTION")
         elif direction == -1 and rev_pin:
@@ -46,7 +55,8 @@ class SutoFlowHandler(BaseDeviceHandler):
 
     def _log(self, msg: str):
         device_id = self.config.get("device_id", "Unknown")
-        self.logger(f"[{device_id}] {msg}")
+        model = self.config.get("model", "Unknown")
+        self.logger(f"[{device_id}][{model}] {msg}")
 
     @staticmethod
     def _decode_uint32_le(words: list[int]) -> int:
