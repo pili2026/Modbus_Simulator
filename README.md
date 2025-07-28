@@ -105,26 +105,30 @@ This hybrid approach balances reusability with the flexibility to simulate more 
 
 ### Flow Meter Modules
 
-Flow meter modules simulate real-time and cumulative flow metrics using an extended IO-based configuration. This approach supports a wide range of flow-related values, including instantaneous flow rate, forward/reverse consumption, and flow direction.
+Flow meter modules simulate real-time and cumulative flow metrics using an extended IO-based configuration.  
+This approach supports a wide range of flow-related values, including instantaneous flow rate, forward/reverse consumption, and flow direction.
 
 #### Design Principles
 
-- **Generic Configuration**: Flow meters are configured as `io_module` devices, reusing the same profile-based simulation logic as AI modules.
-- **Floating Point Support**: The `FLOW_VALUE` value is written as a 32-bit float (split into two 16-bit registers) to simulate realistic decimal precision.
-- **Cumulative Flow Simulation**:
-  - `FLOW_CONSUMPTION` and `FLOW_REVCONSUMPTION` use 32-bit unsigned integers (two registers) to simulate forward and reverse accumulated flow.
-  - `FLOW_CONSUMPTION` is automatically incremented over time for demonstration purposes.
-- **Flow Direction Logic**: The `FLOW_DIRECTION` field is determined by a simple even/odd check on the simulated `FLOW_VALUE` value (`flow % 2 < 1` → forward).
-- **Profile Support**: The `FLOW_VALUE` value can be driven by various profiles (e.g., `ramp`, `wave`) to simulate dynamic changes over time.
+- **Generic Configuration**: Flow meters are defined as `io_module` devices, reusing the profile-based simulation system similar to AI modules.
+- **Floating Point Support**: `FLOW_VALUE` uses a 32-bit float (stored across two 16-bit registers) to simulate real-time flow values with decimal precision.
+- **Cumulative Flow Tracking**:
+  - `FLOW_CONSUMPTION` and `FLOW_REVCONSUMPTION` are 32-bit unsigned integers (each occupying two registers).
+  - The simulator increments either `FLOW_CONSUMPTION` or `FLOW_REVCONSUMPTION` once per cycle depending on `FLOW_DIRECTION`.
+  - These two counters are mutually exclusive — only one is updated at a time.
+- **Flow Direction Control**:
+  - `FLOW_DIRECTION` is a signed 16-bit integer set externally (e.g., `1` for forward, `-1` for reverse).
+  - The simulator does not toggle this value automatically; direction logic is controlled by your own script or config.
+- **Profile-Driven Simulation**:
+  - The `FLOW_VALUE` value follows a selected profile (`ramp`, `wave`, etc.) to simulate dynamic flow over time.
 
 #### Benefits
 
-- **Extensibility**: Easily simulate a variety of flow sensor behaviors using profiles and custom scaling.
-- **Integration Ready**: Compatible with alert/control logic and device interaction scenarios.
-- **Test-Ready Outputs**: Provides realistic flow-related values suitable for automated system validation and monitoring tools.
+- **Realistic Behavior**: Provides full-duplex simulation of flow rate and cumulative volume in both directions.
+- **Flexible Control**: Direction logic can be easily manipulated externally to test switching behavior.
+- **Integration Friendly**: Works seamlessly with alert/control pipelines and testing tools for SCADA/IIoT systems.
 
-This hybrid approach combines the flexibility of simulation with the clarity of real-world flow meter structure. 
-Additional devices (e.g., water meters, gas meters) can follow a similar schema for expanded testing coverage.
+This design allows you to accurately simulate industrial flow meters such as those for water, gas, or air, while maintaining high flexibility in test configuration.
 
 ---
 
