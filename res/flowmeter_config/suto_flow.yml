@@ -4,7 +4,7 @@ device_id: SUTO_V1
 register_type: holding
 
 pins:
-  - name: FLOW_FLOW
+  - name: FLOW_VALUE
     offset: 6
     type: float
     value: 0

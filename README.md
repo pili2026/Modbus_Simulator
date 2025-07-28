@@ -12,6 +12,9 @@
   - [Notes on AI and DIO Module Configuration](#notes-on-ai-and-dio-module-configuration)
     - [AI Modules](#ai-modules)
     - [DIO Modules](#dio-modules)
+    - [Flow Meter Modules](#flow-meter-modules)
+      - [Design Principles](#design-principles)
+      - [Benefits](#benefits)
   - [Execution](#execution)
     - [Virtual RS485 Simulation with `socat`](#virtual-rs485-simulation-with-socat)
     - [Shell Scripts](#shell-scripts)
@@ -98,6 +101,30 @@ However, **some custom or proprietary devices**, such as `IMA_C`, may use a **de
 * Custom devices like `IMA_C` require their own YAML and specific logic.
 
 This hybrid approach balances reusability with the flexibility to simulate more complex or specialized devices.
+
+
+### Flow Meter Modules
+
+Flow meter modules simulate real-time and cumulative flow metrics using an extended IO-based configuration. This approach supports a wide range of flow-related values, including instantaneous flow rate, forward/reverse consumption, and flow direction.
+
+#### Design Principles
+
+- **Generic Configuration**: Flow meters are configured as `io_module` devices, reusing the same profile-based simulation logic as AI modules.
+- **Floating Point Support**: The `FLOW_VALUE` value is written as a 32-bit float (split into two 16-bit registers) to simulate realistic decimal precision.
+- **Cumulative Flow Simulation**:
+  - `FLOW_CONSUMPTION` and `FLOW_REVCONSUMPTION` use 32-bit unsigned integers (two registers) to simulate forward and reverse accumulated flow.
+  - `FLOW_CONSUMPTION` is automatically incremented over time for demonstration purposes.
+- **Flow Direction Logic**: The `FLOW_DIRECTION` field is determined by a simple even/odd check on the simulated `FLOW_VALUE` value (`flow % 2 < 1` → forward).
+- **Profile Support**: The `FLOW_VALUE` value can be driven by various profiles (e.g., `ramp`, `wave`) to simulate dynamic changes over time.
+
+#### Benefits
+
+- **Extensibility**: Easily simulate a variety of flow sensor behaviors using profiles and custom scaling.
+- **Integration Ready**: Compatible with alert/control logic and device interaction scenarios.
+- **Test-Ready Outputs**: Provides realistic flow-related values suitable for automated system validation and monitoring tools.
+
+This hybrid approach combines the flexibility of simulation with the clarity of real-world flow meter structure. 
+Additional devices (e.g., water meters, gas meters) can follow a similar schema for expanded testing coverage.
 
 ---
 
