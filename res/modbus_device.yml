@@ -24,8 +24,12 @@ devices:
     slave_id: 5
     model_file: dio_config/ima_c.yml
 
-  - id: ADAM--4117
+  - id: ADAM-4117
     serial_port: /tmp/ttyV1
     slave_id: 6
     model_file: ai_config/ai_8_pin_module_fc03.yml
 
+  - id: SUTO_FLOW
+    serial_port: /tmp/ttyV1
+    slave_id: 7
+    model_file: flowmeter_config/suto_flow.yml

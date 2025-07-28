@@ -1,0 +1,26 @@
+type: io_module
+model: SUTO_FLOW
+device_id: SUTO_V1
+register_type: holding
+
+pins:
+  - name: FLOW_FLOW
+    offset: 6
+    type: float
+    value: 0
+    profile:
+      type: ramp
+      step: 0.1
+      max: 100
+
+  - name: FLOW_CONSUMPTION
+    offset: 8
+    value: 0
+
+  - name: FLOW_REVCONSUMPTION
+    offset: 14
+    value: 0
+
+  - name: FLOW_DIRECTION
+    offset: 42
+    value: 1
