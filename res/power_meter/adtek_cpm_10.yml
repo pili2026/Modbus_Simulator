@@ -1,0 +1,165 @@
+type: power_meter
+model: ADTEK_CPM10
+register_type: holding
+description: "ADtek CPM-10 Panel Meter (Simulator, builder-compatible)"
+
+pins:
+  # -------------------- Energy (3-word big-endian) --------------------
+  # KWh @ 0/1/2: High two words fixed, low word slowly increasing, for ReadRegister3W_BE
+  - name: KWH_W1_HI
+    offset: 0
+    value: 0
+  - name: KWH_W2_MD
+    offset: 1
+    value: 1
+  - name: KWH_W3_LO
+    offset: 2
+    value: 1000
+    profile:
+      type: ramp
+      step: 3       # Each tick +3 (driver’s EnergyIndex=3 → multiplier 0.1), equals about +0.3 kWh per tick
+      min: 0
+      max: 65000
+
+  # Kvarh @ 3/4/5: Slower rate
+  - name: KVARH_W1_HI
+    offset: 3
+    value: 0
+  - name: KVARH_W2_MD
+    offset: 4
+    value: 0
+  - name: KVARH_W3_LO
+    offset: 5
+    value: 500
+    profile:
+      type: ramp
+      step: 1
+      min: 0
+      max: 65000
+
+  # -------------------- Averages --------------------
+  # Average Voltage @ 6; driver applies VoltageIndex multiplier (set to 1.0 here)
+  - name: AVG_VOLT
+    offset: 6
+    value: 220
+    profile:
+      type: wave
+      period: 60
+      amplitude: 2
+      base: 220
+
+  # Average Current @ 7; driver applies CurrentIndex multiplier (here 0.010), raw 150 → 1.50 A
+  - name: AVG_CURR
+    offset: 7
+    value: 150
+    profile:
+      type: wave
+      period: 45
+      amplitude: 10
+      base: 150
+
+  # -------------------- Instant Power Family --------------------
+  # kW @ 9; driver applies EnergyIndex-derived multiplier (0.1 here), raw 350 → 35.0 kW
+  - name: KW
+    offset: 9
+    value: 350
+    profile:
+      type: wave
+      period: 40
+      amplitude: 30
+      base: 350
+
+  # kVar @ 10; raw 120 → 12.0 kVar
+  - name: KVAR
+    offset: 10
+    value: 120
+    profile:
+      type: wave
+      period: 50
+      amplitude: 15
+      base: 120
+
+  # kVA @ 11; raw 380 → 38.0 kVA
+  - name: KVA
+    offset: 11
+    value: 380
+    profile:
+      type: wave
+      period: 55
+      amplitude: 25
+      base: 380
+
+  # Power Factor @ 12; driver multiplies by 0.001, raw 950 → PF 0.95
+  - name: PF
+    offset: 12
+    value: 950
+    profile:
+      type: wave
+      period: 60
+      amplitude: 20   # 930 ~ 970 → 0.93 ~ 0.97
+      base: 950
+
+  # -------------------- Phase Currents (scaled by CurrentIndex=0.010) --------------------
+  - name: IA
+    offset: 16
+    value: 180       # → 1.80 A
+    profile:
+      type: wave
+      period: 50
+      amplitude: 20
+      base: 180
+
+  - name: IB
+    offset: 17
+    value: 160       # → 1.60 A
+    profile:
+      type: wave
+      period: 52
+      amplitude: 18
+      base: 160
+
+  - name: IC
+    offset: 18
+    value: 140       # → 1.40 A
+    profile:
+      type: wave
+      period: 54
+      amplitude: 16
+      base: 140
+
+  # -------------------- Scale Index Registers (driver will read and apply multipliers) --------------------
+  # 32: Voltage index (v_list = [0.1, 1.0, 10.0, 100.0]) → 1 => ×1.0
+  - name: VOLTAGE_INDEX
+    offset: 32
+    value: 1
+
+  # 31: Current index (a_list = [0.001, 0.010, 0.1]) → 1 => ×0.010
+  - name: CURRENT_INDEX
+    offset: 31
+    value: 1
+
+  # 33: Energy index (k_list × 0.001) → 3 => 100.0 × 0.001 = ×0.1
+  - name: ENERGY_INDEX
+    offset: 33
+    value: 3
+
+  # -------------------- Config Registers (driver can write; default values provided here) --------------------
+  - name: WIRING_METHOD
+    offset: 34
+    value: 0
+
+  - name: PT_1ST_UNIT
+    offset: 35
+    value: 0
+
+  - name: PT_1ST
+    offset: 36
+    value: 1
+
+  - name: PT_2ND
+    offset: 37
+    value: 1
+
+  - name: CT_1ST
+    offset: 38
+    value: 150

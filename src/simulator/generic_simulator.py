@@ -21,9 +21,11 @@ class GenericModbusSimulator:
         self.context, fx = builder.build()
 
         device_type = self.config.get("type", "").lower()
+        base_addr = self.config.get("base_address", 0)
 
-        if device_type == "io_module":
-            base_addr = self.config.get("base_address", 0)
+        pins = self.config.get("pins", [])
+        has_profiles = any(isinstance(p.get("profile"), dict) for p in pins)
+        if has_profiles:
             self.updater = ProfileUpdater(self.config, self.context)
             self.updater.start(fx_code=fx, base_address=base_addr)
 
