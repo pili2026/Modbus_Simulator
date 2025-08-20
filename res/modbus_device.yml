@@ -33,3 +33,9 @@ devices:
     serial_port: /tmp/ttyV1
     slave_id: 7
     model_file: flowmeter_config/suto_flow.yml
+
+  - id: ADTEK_CPM10
+    serial_port: /tmp/ttyV1
+    slave_id: 8
+    model_file: power_meter/adtek_cpm_10.yml
+
