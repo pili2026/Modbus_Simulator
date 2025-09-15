@@ -10,6 +10,19 @@ from simulator.profile_generator import ProfileGenerator
 from utils.pin_processor.pin_value_reader import PinValueReader
 from utils.pin_processor.pin_value_writer import PinValueWriter
 
+# ----- NEW: function code mapping -----
+FC_MAP = {
+    "coil": 1,  # read coils (FC1), write single/multiple coil (FC5/15)
+    "discrete": 2,  # read discrete inputs (FC2)
+    "holding": 3,  # read holding registers (FC3), write single/multi reg (FC6/16)
+    "input": 4,  # read input registers (FC4)
+}
+
+
+def _fx_for_pin(pin: dict) -> int:
+    regtype = (pin.get("register_type") or "holding").lower()
+    return FC_MAP.get(regtype, 3)
+
 
 class ProfileUpdater:
     """
@@ -30,12 +43,12 @@ class ProfileUpdater:
         self.pin_handlers = [DOutMonitorHandler()]
         self.device_handlers = [SutoFlowHandler(context, config)]
 
-    def start(self, fx_code: int, base_address: int = 0, interval_sec: float = 1.0):
+    # ----- CHANGED: drop fx_code parameter -----
+    def start(self, base_address: int = 0, interval_sec: float = 1.0):
         """
         Start the background simulation thread.
 
-        :param fx_code: Modbus function code (e.g., 3 or 4)
-        :param base_address: base register address
+        :param base_address: base register address (0-based for ModbusSlaveContext)
         :param interval_sec: how often to run the update loop
         """
         t = 0
@@ -47,12 +60,17 @@ class ProfileUpdater:
             nonlocal t
             while self.running:
                 for pin in pin_list:
-                    offset = pin.get("offset")
-                    addr = base_address + int(offset)
+                    # address & context
+                    offset = int(pin.get("offset", 0))
+                    addr = base_address + offset
+
+                    # NEW: per-pin fx_code (by register_type)
+                    fx_code = _fx_for_pin(pin)
+
                     name = pin.get("name", f"offset_{offset}")
                     log_ctx = self._format_log_ctx(device_id, model, name, addr)
 
-                    # Check if any pin handler wants to handle this pin
+                    # Pin-level handler (e.g., DOut monitor / bit view)
                     handled = False
                     for handler in self.pin_handlers:
                         if handler.should_handle(model, pin):
@@ -61,20 +79,21 @@ class ProfileUpdater:
                             break
 
                     if handled:
-                        continue  # skip normal profile handling if already handled
+                        # If handler took care of this pin, skip the profile overwrite
+                        continue
 
-                    # Process using profile generator
+                    # Normal profile flow
                     profile = pin.get("profile")
                     if not profile:
                         continue
 
-                    current_val: int | float | None = self.reader.get_current_value(pin, fx_code, addr)
-                    val: float = ProfileGenerator.generate(profile, t, current_val)
+                    current_val = self.reader.get_current_value(pin, fx_code, addr)
+                    val = ProfileGenerator.generate(profile, t, current_val)
                     self.writer.write(pin, fx_code, addr, val, log_ctx)
 
-                # Apply device-wide handlers after all pins are processed
+                # device-wide handlers after all pins
                 for handler in self.device_handlers:
-                    handler.handle(fx_code)
+                    handler.handle(_fx_for_pin({"register_type": "holding"}))  # or keep original assumption if needed
 
                 t += 1
                 time.sleep(interval_sec)
@@ -82,22 +101,12 @@ class ProfileUpdater:
         threading.Thread(target=_loop, daemon=True).start()
 
     def stop(self):
-        """
-        Stop the simulation loop.
-        """
+        """Stop the simulation loop."""
         self.running = False
 
     def _format_log_ctx(self, device_id: str, model: str, name: str, addr: int) -> str:
-        """
-        Format the prefix used for logging per pin.
-
-        :return: formatted string for log context
-        """
         return f"[{device_id}][{model}] {name} (addr={addr})"
 
     @staticmethod
     def _log(msg: str):
-        """
-        Default logger using timestamp.
-        """
         print(f"[{datetime.now().isoformat(timespec='seconds')}] {msg}")

@@ -25,9 +25,13 @@ class GenericModbusSimulator:
 
         pins = self.config.get("pins", [])
         has_profiles = any(isinstance(p.get("profile"), dict) for p in pins)
-        if has_profiles:
+
+        should_start_updater = has_profiles or any(
+            (p.get("name", "").startswith("DOut") or p.get("bit") is not None) for p in pins
+        )
+        if should_start_updater:
             self.updater = ProfileUpdater(self.config, self.context)
-            self.updater.start(fx_code=fx, base_address=base_addr)
+            self.updater.start(base_address=base_addr)
 
         if device_type == "inverter":
             self._start_inverter_logic()
