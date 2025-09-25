@@ -39,3 +39,7 @@ devices:
     slave_id: 8
     model_file: power_meter/adtek_cpm_10.yml
 
+  - id: YUDEN_FLOW
+    serial_port: /tmp/ttyV1
+    slave_id: 6
+    model_file: flowmeter_config/yuden_flow.yml

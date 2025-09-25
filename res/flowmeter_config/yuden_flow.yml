@@ -1,17 +1,17 @@
 type: io_module
-model: SUTO_FLOW
-device_id: SUTO_V1
+model: YUDEN_FLOW
+device_id: YUDEN_V1
 register_type: holding
 pins:
   - name: FLOW_VALUE
-    offset: 6
+    offset: 1
     type: float
     value: 0
     profile: { type: ramp, step: 0.1, max: 100 }
 
   - name: FLOW_CONSUMPTION
-    offset: 8
-    type: uint32
+    offset: 1115
+    type: float 
     value: 0
 
   - name: FLOW_DIRECTION
