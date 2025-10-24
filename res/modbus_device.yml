@@ -41,5 +41,10 @@ devices:
 
   - id: YUDEN_FLOW
     serial_port: /tmp/ttyV1
-    slave_id: 6
+    slave_id: 9
     model_file: flowmeter_config/yuden_flow.yml
+
+  - id: JY_DAM0204
+    serial_port: /tmp/ttyV1
+    slave_id: 10
+    model_file: dio_config/jy_dam0204.yml

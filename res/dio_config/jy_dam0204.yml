@@ -1,0 +1,60 @@
+model: "JY_DAM0204"
+type: "io_module"
+device_id: "JY_DAM0204_1"
+base_address: 0
+interval_sec: 1.0
+
+description: >
+  JY_DAM0204 simulator (faithful Modbus map):
+  - DI: 10001..10004 (FC2, discrete inputs)
+  - DO: 00001..00002 (FC1/5/15, coils)
+  - Optional summary via 3xxxx input registers (bitfield)
+
+register_mapping:
+  di_base: 0          # 10001 → offset 0
+  do_base: 0          # 00001 → offset 0
+  summary_input_reg: 1  # 30002 → offset 1（0-based）
+
+pins:
+  # ---- 4× DI (read-only, discrete inputs) ----
+  - name: DIn01
+    register_type: discrete
+    offset: 0        # 10001
+    readonly: true
+    # 可加 profile 來模擬
+    profile: { type: constant, value: 0 }
+
+  - name: DIn02
+    register_type: discrete
+    offset: 1        # 10002
+    readonly: true
+    profile: { type: constant, value: 1 }
+
+  - name: DIn03
+    register_type: discrete
+    offset: 2        # 10003
+    readonly: true
+    profile: { type: toggle, interval: 5 }
+
+  - name: DIn04
+    register_type: discrete
+    offset: 3        # 10004
+    readonly: true
+    profile: { type: pulse, high_time: 3, low_time: 2 }
+
+  # ---- 2× DO (writable, coils) ----
+  - name: DOut01
+    register_type: coil
+    offset: 0        # 00001
+    writable: true
+
+  - name: DOut02
+    register_type: coil
+    offset: 1        # 00002
+    writable: true
+
+  # ---- Optional: summary bitfield in input register 30002 ----
+  - name: Summary
+    register_type: input
+    offset: 1        # 30002（0-based）
+    readonly: true
