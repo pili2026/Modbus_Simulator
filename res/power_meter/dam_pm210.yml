@@ -1,0 +1,184 @@
+type: power_meter
+model: DAE_PM210
+register_type: holding
+description: "DAE PM210 Panel Meter (Simulator; 2-word Little-Endian registers)"
+
+# NOTE (EN): Addresses and scales follow the legacy driver.
+# - Energy kWh/kvarh = 2W-LE @ addr * 0.01
+# - Avg Voltage per phase = raw/10.0 ; avg across available phases * PT
+# - Avg Current per phase = raw*0.001 ; avg across available phases * CT
+# - kW/kVA/kvar = raw*0.001*PT*CT
+# - PF = raw*0.001
+# - PT ratio write @133 (value=PT*100); CT ratio write @134 (value=CT)
+
+pins:
+  # -------------------- Energy (2-word Little-Endian) --------------------
+  # kWh @ 48/49 = raw * 0.01
+  - name: KWH_LO
+    offset: 48          # low word
+    value: 1000         # => 10.00 kWh initially
+    profile:
+      type: ramp
+      step: 5           # +0.05 kWh per tick (because scale 0.01)
+      min: 0
+      max: 65000
+      carry_to: KWH_HI
+  - name: KWH_HI
+    offset: 49          # high word
+    value: 0
+
+  # kvarh @ 50/51 = raw * 0.01
+  - name: KVARH_LO
+    offset: 50
+    value: 500          # => 5.00 kvarh
+    profile:
+      type: ramp
+      step: 2           # +0.02 kvarh per tick
+      min: 0
+      max: 65000
+  - name: KVARH_HI
+    offset: 51
+    value: 0
+
+  # -------------------- Average Voltage by phase (2W-LE) --------------------
+  # Driver first tries 20/22/24; if all zeros, fallback to 26/28/30
+  # Per-phase raw scale: /10.0 → e.g. 2200 => 220.0 V
+  - name: VA_LN_A_LO
+    offset: 20
+    value: 2200         # 220.0 V
+  - name: VA_LN_A_HI
+    offset: 21
+    value: 0
+
+  - name: VA_LN_B_LO
+    offset: 22
+    value: 2190         # 219.0 V
+  - name: VA_LN_B_HI
+    offset: 23
+    value: 0
+
+  - name: VA_LN_C_LO
+    offset: 24
+    value: 2210         # 221.0 V
+  - name: VA_LN_C_HI
+    offset: 25
+    value: 0
+
+  # Fallback line-line voltages (kept non-zero to avoid fallback trigger = optional)
+  - name: VAB_LL_LO
+    offset: 26
+    value: 3800         # 380.0 V (if your system is LL = ~380V)
+  - name: VAB_LL_HI
+    offset: 27
+    value: 0
+  - name: VBC_LL_LO
+    offset: 28
+    value: 3800
+  - name: VBC_LL_HI
+    offset: 29
+    value: 0
+  - name: VCA_LL_LO
+    offset: 30
+    value: 3800
+  - name: VCA_LL_HI
+    offset: 31
+    value: 0
+
+  # -------------------- Average Current by phase (2W-LE) --------------------
+  # Per-phase raw scale: *0.001 → e.g. 12500 => 12.5 A
+  - name: IA_LO
+    offset: 32
+    value: 12500        # 12.5 A
+    profile:
+      type: wave        # mild wave to simulate load fluctuation
+      min: 11000
+      max: 15000
+      period_sec: 20
+  - name: IA_HI
+    offset: 33
+    value: 0
+
+  - name: IB_LO
+    offset: 34
+    value: 12000        # 12.0 A
+    profile:
+      type: wave
+      min: 10000
+      max: 14000
+      period_sec: 22
+  - name: IB_HI
+    offset: 35
+    value: 0
+
+  - name: IC_LO
+    offset: 36
+    value: 13000        # 13.0 A
+    profile:
+      type: wave
+      min: 11000
+      max: 15000
+      period_sec: 26
+  - name: IC_HI
+    offset: 37
+    value: 0
+
+  # -------------------- Power Factor (2W-LE but driver uses only scale 0.001) --------------------
+  - name: PF_AVG_LO
+    offset: 46
+    value: 950          # 0.950
+  - name: PF_AVG_HI
+    offset: 47
+    value: 0
+
+  # -------------------- Instant Power (2W-LE) --------------------
+  # kW @ 102/103 = raw * 0.001 * PT * CT
+  - name: KW_LO
+    offset: 102
+    value: 35000        # 35.000 kW (before PT/CT)
+    profile:
+      type: wave
+      min: 30000        # 30.000 kW
+      max: 42000        # 42.000 kW
+      period_sec: 18
+  - name: KW_HI
+    offset: 103
+    value: 0
+
+  # kVA @ 110/111 = raw * 0.001 * PT * CT
+  - name: KVA_LO
+    offset: 110
+    value: 38000        # 38.000 kVA
+    profile:
+      type: wave
+      min: 32000
+      max: 42000
+      period_sec: 21
+  - name: KVA_HI
+    offset: 111
+    value: 0
+
+  # kvar @ 118/119 = raw * 0.001 * PT * CT
+  - name: KVAR_LO
+    offset: 118
+    value: 12000        # 12.000 kvar
+    profile:
+      type: wave
+      min: 8000
+      max: 16000
+      period_sec: 24
+  - name: KVAR_HI
+    offset: 119
+    value: 0
+
+  # -------------------- Ratio Registers (Writable) --------------------
+  # PT ratio write target @ 133: expects int(PT*100), e.g., PT=100.0 => 10000
+  - name: RW_PT_RATIO
+    offset: 133
+    value: 100        # PT=100.00 (example); your driver multiplies reading by PT
+    writable: true
+
+  # CT ratio write target @ 134: expects int(CT), e.g., CT=300 => 300
+  - name: RW_CT_RATIO
+    offset: 134
+    value: 1          # CT=300 (example)
+    writable: true
