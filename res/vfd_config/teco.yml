@@ -32,5 +32,5 @@ initial_registers:
   "9474": 6000           # Command frequency = 60.00 Hz
   "9473": 1              # ON (Running)
   "9505": 0              # No error
-  "9504": 1              # Status = Running
+  "9504": 709              # Status = Running
   "9512": 0              # No alert

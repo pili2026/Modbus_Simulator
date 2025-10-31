@@ -28,6 +28,6 @@ initial_registers:
   "9251": 6000            # Actual frequency 60.00Hz
   "9256": 0               # Error code
   "9255": 0               # Warning code
-  "9249": 1               # Status
+  "9249": 709               # Status
   "9218": 6000            # Command frequency 60.00Hz
   "9217": 1               # Currently ON
