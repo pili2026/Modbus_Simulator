@@ -1,0 +1,25 @@
+type: sensor
+model: DO750
+device_id: DO750_V1
+register_type: holding
+
+pins:
+  - name: O2_VOL_PCT
+    offset: 0
+    type: float32_wordswap
+    value: 21.0
+    profile: 
+      type: ramp
+      step: 0.5
+      min: 18.0
+      max: 25.0
+
+  - name: PROCESS_TEMP_C
+    offset: 4
+    type: float32_be
+    value: 25.0
+    profile: 
+      type: wave
+      period: 30
+      amplitude: 3.0
+      base: 25.0

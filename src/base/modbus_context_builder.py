@@ -51,7 +51,7 @@ class ModbusContextBuilder:
 
     def _word_width_for_type(self, t: str) -> int:
         t = (t or "").lower()
-        if t in ("float", "uint32", "int32"):
+        if t in ("float", "uint32", "int32", "float32_wordswap", "float32_be"):
             return 2
         return 1
 
@@ -69,7 +69,7 @@ class ModbusContextBuilder:
             raw_value = pin.get("value")
             ptype = (pin.get("type") or "").lower()
 
-            if raw_value is not None and ptype not in ("float", "uint32", "int32"):
+            if raw_value is not None and ptype not in ("float", "uint32", "int32", "float32_wordswap", "float32_be"):
 
                 val16 = int(raw_value) & 0xFFFF
                 self.initial_registers_16[addr] = val16
@@ -88,37 +88,66 @@ class ModbusContextBuilder:
         for pin in pins:
             if "offset" not in pin:
                 continue
-            addr = base_addr + int(pin["offset"])
-            ptype = (pin.get("type") or "").lower()
+
+            addr: int = base_addr + int(pin["offset"])
+            pin_type: str = (pin.get("type") or "").lower()
             raw_value = pin.get("value")
             if raw_value is None:
                 continue
 
-            if ptype == "float":
-                words = self._encode_float32_le_swap(float(raw_value))
-                context.setValues(self.fx_code, addr, words)
-            elif ptype in ("uint32", "int32"):
-                signed = ptype == "int32"
-                words = self._encode_int32_le(int(raw_value), signed)
-                context.setValues(self.fx_code, addr, words)
-            else:
-                if addr not in self.initial_registers_16:
-                    context.setValues(self.fx_code, addr, [int(raw_value) & 0xFFFF])
+            match pin_type:
+                case "float":
+                    word_list: list[int] = self._encode_float32_le_swap(float(raw_value))
+                    context.setValues(self.fx_code, addr, word_list)
+
+                case "float32_wordswap":
+                    word_list: list[int] = self._encode_float32_be_wordswap(float(raw_value))
+                    context.setValues(self.fx_code, addr, word_list)
+
+                case "float32_be":
+                    word_list: list[int] = self._encode_float32_be(float(raw_value))
+                    context.setValues(self.fx_code, addr, word_list)
+
+                case "uint32" | "int32":
+                    signed = pin_type == "int32"
+                    word_list: list[int] = self._encode_int32_le(int(raw_value), signed)
+                    context.setValues(self.fx_code, addr, word_list)
+
+                case _:
+                    # default: treat as 16-bit register
+                    if addr not in self.initial_registers_16:
+                        context.setValues(self.fx_code, addr, [int(raw_value) & 0xFFFF])
 
     # ---- encoders ----
     @staticmethod
     def _encode_float32_le_swap(value: float) -> list[int]:
-        b = struct.pack("<f", float(value))
-        lo = int.from_bytes(b[0:2], "little")
-        hi = int.from_bytes(b[2:4], "little")
-        return [hi & 0xFFFF, lo & 0xFFFF]
+        float_bytes = struct.pack("<f", float(value))
+        high_word = int.from_bytes(float_bytes[2:4], "little")
+        low_word = int.from_bytes(float_bytes[0:2], "little")
+        return [high_word & 0xFFFF, low_word & 0xFFFF]
 
     @staticmethod
     def _encode_int32_le(value: int, signed: bool) -> list[int]:
         if signed:
-            b = (value & 0xFFFFFFFF).to_bytes(4, "little", signed=False)
+            float_bytes = (value & 0xFFFFFFFF).to_bytes(4, "little", signed=False)
         else:
-            b = int(value & 0xFFFFFFFF).to_bytes(4, "little", signed=False)
-        lo = int.from_bytes(b[0:2], "little")
-        hi = int.from_bytes(b[2:4], "little")
-        return [lo & 0xFFFF, hi & 0xFFFF]
+            float_bytes = int(value & 0xFFFFFFFF).to_bytes(4, "little", signed=False)
+        high_word = int.from_bytes(float_bytes[2:4], "little")
+        lo = int.from_bytes(float_bytes[0:2], "little")
+        return [lo & 0xFFFF, high_word & 0xFFFF]
+
+    @staticmethod
+    def _encode_float32_be_wordswap(value: float) -> list[int]:
+        """DO750 O2: big-endian + word-swap (BADC)"""
+        float_bytes = struct.pack(">f", float(value))
+        high_word = int.from_bytes(float_bytes[0:2], "big")
+        low_word = int.from_bytes(float_bytes[2:4], "big")
+        return [low_word & 0xFFFF, high_word & 0xFFFF]  # word-swap
+
+    @staticmethod
+    def _encode_float32_be(value: float) -> list[int]:
+        """Standard big-endian (ABCD)"""
+        float_bytes = struct.pack(">f", float(value))
+        high_word = int.from_bytes(float_bytes[0:2], "big")
+        low_word = int.from_bytes(float_bytes[2:4], "big")
+        return [high_word & 0xFFFF, low_word & 0xFFFF]
