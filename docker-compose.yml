@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: modbus-simulator
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+    devices:
+      - "/dev/ttyMODBUS1:/dev/ttyMODBUS1"
