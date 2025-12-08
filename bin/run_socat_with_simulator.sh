@@ -38,6 +38,8 @@ echo "[INFO] $TTY0 → $(readlink -f "$TTY0")"
 echo "[INFO] $TTY1 → $(readlink -f "$TTY1")"
 echo "[INFO] Logs: $LOG_FILE"
 
+export PYTHONUNBUFFERED=1
+
 echo "[INFO] Launching simulator using main.py"
 python3 src/main.py 
 
