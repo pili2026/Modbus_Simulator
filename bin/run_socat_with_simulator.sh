@@ -1,39 +1,43 @@
 #!/bin/bash
-
 set -euo pipefail
 
-TTY0="/tmp/ttyV0"
-TTY1="/tmp/ttyV1"
+TTY0="/dev/ttyMODBUS0"
+TTY1="/dev/ttyMODBUS1"
 LOG_FILE="/tmp/socat.log"
 
 echo "[INFO] Cleaning up previous virtual ports..."
-rm -f "$TTY0" "$TTY1"
+sudo rm -f "$TTY0" "$TTY1" 2>/dev/null || true
 
 echo "[INFO] Starting socat for single Modbus bus (RTU shared)..."
-socat -d -d PTY,link="$TTY0",raw,echo=0 PTY,link="$TTY1",raw,echo=0 &> "$LOG_FILE" &
+sudo socat -d -d \
+  PTY,link="$TTY0",raw,echo=0,mode=666 \
+  PTY,link="$TTY1",raw,echo=0,mode=666 \
+  &> "$LOG_FILE" &
 SOCAT_PID=$!
 
 cleanup() {
   echo "[INFO] Cleaning up..."
-  kill "$SOCAT_PID" 2>/dev/null || true
-  wait "$SOCAT_PID" 2>/dev/null || true
+  sudo kill "$SOCAT_PID" 2>/dev/null || true
+  sudo wait "$SOCAT_PID" 2>/dev/null || true
+  sudo rm -f "$TTY0" "$TTY1" 2>/dev/null || true
   echo "[INFO] Exit."
-  exit 0
 }
-
 trap cleanup INT TERM EXIT
 
-# Wait for socat to successfully create the virtual ports
 echo "[INFO] Waiting for virtual ports to be ready..."
-for i in {1..10}; do
+for i in {1..20}; do
   if [[ -e "$TTY0" && -e "$TTY1" ]]; then
-    echo "[INFO] Virtual ports ready: $TTY0 <--> $TTY1"
     break
   fi
-  sleep 0.5
+  sleep 0.2
 done
 
-# Show the actual device paths
+if [[ ! -e "$TTY0" || ! -e "$TTY1" ]]; then
+  echo "[ERROR] socat failed to create virtual ports. Check log: $LOG_FILE"
+  exit 1
+fi
+
+echo "[INFO] Virtual ports ready: $TTY0 <--> $TTY1"
 echo "[INFO] $TTY0 → $(readlink -f "$TTY0")"
 echo "[INFO] $TTY1 → $(readlink -f "$TTY1")"
 echo "[INFO] Logs: $LOG_FILE"
@@ -41,9 +45,4 @@ echo "[INFO] Logs: $LOG_FILE"
 export PYTHONUNBUFFERED=1
 
 echo "[INFO] Launching simulator using main.py"
-python3 src/main.py 
-
-# Keep the script running in the background
-while true; do
-  sleep 1
-done
+python3 src/main.py
