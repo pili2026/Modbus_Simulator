@@ -12,12 +12,12 @@ devices:
   - id: IMA_C_LILING
     serial_port: /tmp/ttyV1
     slave_id: 3
-    model_file: dio_config/ima_c.yml
+    model_file: dio_config/ima_c_first_enterprise.yml
 
   - id: IMA_C_TIANJI
     serial_port: /tmp/ttyV1
     slave_id: 4
-    model_file: dio_config/ima_c.yml
+    model_file: dio_config/ima_c_first_enterprise.yml
 
   - id: JY_DAM0816D
     serial_port: /tmp/ttyV1
