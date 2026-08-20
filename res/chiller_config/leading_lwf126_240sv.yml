@@ -1,9 +1,15 @@
 type: chiller
 model: LEADING_LWF126_240SV
 register_type: holding
-description: Minimal Leading LWF126/240SV status model for sequence-control simulation.
+description: >
+  First Enterprise Leading LWF126/240SV model with complete Talos-readable
+  register coverage. Compressor status points are driven dynamically by
+  SimulationWorld; all other readable points are stable hold values so Talos
+  bulk reads and Orion online derivation remain valid while the chiller is
+  stopped or running.
 
 pins:
+  # Sequence confirmation points. SimulationWorld overwrites these values.
   - name: COMP_A_STATUS
     offset: 6010
     register_type: holding
@@ -16,14 +22,96 @@ pins:
     value: 0
     profile: { type: hold }
 
-  - name: CHILLED_WATER_RETURN_TEMP
+  # Inverter output is zero while the simulated chiller starts in stopped state.
+  - name: INVERTER_OUTPUT_HZ
+    offset: 6275
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  # Water temperatures: raw values use the Talos driver's 0.1 degC scale.
+  - name: CHILLED_WATER_TEMP_IN
     offset: 6320
     register_type: holding
     value: 150
     profile: { type: hold }
 
-  - name: CHILLED_WATER_SUPPLY_TEMP
+  - name: CHILLED_WATER_TEMP_OUT
     offset: 6321
     register_type: holding
     value: 100
+    profile: { type: hold }
+
+  - name: COOLING_WATER_TEMP_IN
+    offset: 6322
+    register_type: holding
+    value: 300
+    profile: { type: hold }
+
+  - name: COOLING_WATER_TEMP_OUT
+    offset: 6323
+    register_type: holding
+    value: 350
+    profile: { type: hold }
+
+  # Fault and control-signal readbacks. Their vendor semantics are not simulated.
+  - name: COMP_A_FAULT
+    offset: 2025
+    register_type: coil
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_B_FAULT
+    offset: 2026
+    register_type: coil
+    value: 0
+    profile: { type: hold }
+
+  - name: LOCAL_CONTROL_SIGNAL
+    offset: 3001
+    register_type: coil
+    value: 0
+    profile: { type: hold }
+
+  - name: REMOTE_CONTROL_SIGNAL
+    offset: 3002
+    register_type: coil
+    value: 0
+    profile: { type: hold }
+
+  # Runtime counters are placeholders for read coverage only.
+  - name: COMP_A_RUN_MINUTES
+    offset: 9512
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_A_RUN_HOURS
+    offset: 9513
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_A_RUN_DAYS
+    offset: 9514
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_B_RUN_MINUTES
+    offset: 9522
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_B_RUN_HOURS
+    offset: 9523
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_B_RUN_DAYS
+    offset: 9524
+    register_type: holding
+    value: 0
     profile: { type: hold }
