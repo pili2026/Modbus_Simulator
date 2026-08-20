@@ -1,0 +1,56 @@
+type: io_module
+model: IMA_C
+register_type: holding
+
+description: >
+  First Enterprise site-specific IMA_C model.
+  DIn01-DIn04 are reserved inputs and remain OFF in simulation.
+  DOut01 is the site chiller start/stop command.
+  DOut02 is reserved.
+  Bypass remains OFF.
+
+pins:
+  # Reserved digital inputs (read-only bit fields in holding register 2)
+  - name: DIn01
+    offset: 2
+    bit: 0
+    profile:
+      type: constant
+      value: 0
+
+  - name: DIn02
+    offset: 2
+    bit: 1
+    profile:
+      type: constant
+      value: 0
+
+  - name: DIn03
+    offset: 2
+    bit: 2
+    profile:
+      type: constant
+      value: 0
+
+  - name: DIn04
+    offset: 2
+    bit: 3
+    profile:
+      type: constant
+      value: 0
+
+  # Digital outputs (read/write)
+  - name: DOut01
+    offset: 3
+    bit: 0
+
+  - name: DOut02
+    offset: 3
+    bit: 1
+
+  # Bypass (read-only full register)
+  - name: ByPass
+    offset: 4
+    profile:
+      type: constant
+      value: 0
