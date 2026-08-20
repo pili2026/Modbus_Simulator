@@ -45,20 +45,24 @@ class ProfileGenerator:
         min_val = float(profile.get("min", 0.0))
         max_val = float(profile.get("max", 100.0))
         current = float(current) if current is not None else min_val
+        runtime = state if state is not None else {}
+
+        if "phase_deg" in profile and not runtime.get("phase_applied", False):
+            span = max_val - min_val
+            if span > 0:
+                phase_fraction = (
+                    float(profile.get("phase_deg", 0.0)) % 360.0
+                ) / 360.0
+                current = min_val + (
+                    (current - min_val + span * phase_fraction) % span
+                )
+            runtime["phase_applied"] = True
 
         if profile.get("bounce", False):
             if max_val <= min_val:
                 return min_val
 
-            runtime = state if state is not None else {}
             direction = int(runtime.get("direction", 1 if step >= 0 else -1))
-
-            if "phase_deg" in profile and not runtime.get("phase_applied", False):
-                span = max_val - min_val
-                phase_fraction = (float(profile.get("phase_deg", 0.0)) % 360.0) / 360.0
-                current = min_val + ((current - min_val + span * phase_fraction) % span)
-                runtime["phase_applied"] = True
-
             next_val = current + abs(step) * direction
             while next_val > max_val or next_val < min_val:
                 if next_val > max_val:
