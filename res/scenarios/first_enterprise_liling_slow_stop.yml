@@ -1,0 +1,4 @@
+faults: []
+overrides:
+  - behavior: liling_chiller
+    stop_delay_sec: 15.0

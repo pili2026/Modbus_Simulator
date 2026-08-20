@@ -2,6 +2,7 @@ import struct
 
 from pymodbus.datastore import ModbusSlaveContext
 
+from utils.float_codec import decode_float32_little_swap
 
 class PinValueReader:
     def __init__(self, context: ModbusSlaveContext):
@@ -30,12 +31,10 @@ class PinValueReader:
             return values[0] if values else 0
 
     def _read_float(self, fx_code: int, addr: int) -> float:
-        """Standard big-endian float"""
         values = self.context.getValues(fx_code, addr, count=2)
         if not values or len(values) < 2:
             return 0.0
-        float_bytes = struct.pack(">HH", values[0], values[1])
-        return struct.unpack(">f", float_bytes)[0]
+        return decode_float32_little_swap(values)
 
     def _read_float32_wordswap(self, fx_code: int, addr: int) -> float:
         """DO750 O2: big-endian + word-swap (BADC)"""

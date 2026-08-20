@@ -11,8 +11,10 @@ pins:
     n3: 0
     value: 2048  # 25.00°C
     profile:
-      type: ramp
+      type: random
       step: 64
+      noise: 4
+      seed: 101
       min: 819
       max: 4095
 
@@ -27,6 +29,7 @@ pins:
       step: 128
       min: 819
       max: 4095
+      bounce: true
 
   - name: Pressure_Line
     offset: 2
@@ -48,9 +51,11 @@ pins:
     value: 819  # 5.00 bar
     profile:
       type: wave
-      period: 20
-      amplitude: 410
-      base: 2457  # 15.00 bar
+      min: 2047
+      max: 2867
+      period_sec: 20
+      phase_deg: 45
+      noise: 5
 
   - name: Humidity_Sensor
     offset: 4

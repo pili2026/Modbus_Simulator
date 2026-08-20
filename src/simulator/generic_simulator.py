@@ -21,7 +21,8 @@ class GenericModbusSimulator:
         self.context, fx = builder.build()
 
         device_type = self.config.get("type", "").lower()
-        base_addr = self.config.get("base_address", 0)
+        base_addr = int(self.config.get("base_address", 0))
+        interval_sec = float(self.config.get("interval_sec", 1.0))
 
         pins = self.config.get("pins", [])
         has_profiles = any(isinstance(p.get("profile"), dict) for p in pins)
@@ -33,7 +34,10 @@ class GenericModbusSimulator:
 
         if should_start_updater:
             self.updater = ProfileUpdater(self.config, self.context)
-            self.updater.start(base_address=base_addr)
+            self.updater.start(
+                base_address=base_addr,
+                interval_sec=interval_sec,
+            )
 
         if device_type == "inverter":
             self._start_inverter_logic()
