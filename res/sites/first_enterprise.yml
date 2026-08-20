@@ -58,6 +58,13 @@ simulation:
       on_delay_sec: 0.5
       off_delay_sec: 0.5
 
+    - id: cwp3_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 6, name: DOut07_CWP3 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 10, name: DIn11_CWP3 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+
     - id: chwp1_feedback
       type: actuator_feedback
       command: { slave_id: 2, register_type: coil, offset: 0, name: DOut01_CHWP1 }
@@ -66,6 +73,13 @@ simulation:
       off_delay_sec: 0.5
       requires:
         - { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2, equals: 1 }
+
+    - id: chwp2_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 1, name: DOut02_CHWP2 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 1, name: DIn02_CHWP2 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
 
     - id: chwp3_feedback
       type: actuator_feedback
