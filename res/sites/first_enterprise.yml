@@ -1,0 +1,112 @@
+devices:
+  - id: JY_DAM0816D
+    serial_port: /tmp/ttyV1
+    slave_id: 2
+    model_file: dio_config/jy_dam0816d.yml
+
+  - id: IMA_C_LILING
+    serial_port: /tmp/ttyV1
+    slave_id: 3
+    model_file: dio_config/ima_c.yml
+
+  - id: IMA_C_TIANJI
+    serial_port: /tmp/ttyV1
+    slave_id: 4
+    model_file: dio_config/ima_c.yml
+
+  - id: HANBELL_310_410
+    serial_port: /tmp/ttyV1
+    slave_id: 7
+    model_file: chiller_config/hanbell_310_410.yml
+
+  - id: LEADING_LWF126_240SV
+    serial_port: /tmp/ttyV1
+    slave_id: 51
+    model_file: chiller_config/leading_lwf126_240sv.yml
+
+simulation:
+  poll_interval_sec: 0.1
+  event_history_file: ./var/first_enterprise_events.jsonl
+
+  behaviors:
+    - id: cwp1_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 4, name: DOut05_CWP1 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 8, name: DIn09_CWP1 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+
+    - id: cwp2_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 5, name: DOut06_CWP2 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+
+    - id: chwp1_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 0, name: DOut01_CHWP1 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 0, name: DIn01_CHWP1 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+      requires:
+        - { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2, equals: 1 }
+
+    - id: chwp3_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 2, name: DOut03_CHWP3 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 2, name: DIn03_CHWP3 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+      requires:
+        - { slave_id: 2, register_type: discrete, offset: 8, name: DIn09_CWP1, equals: 1 }
+
+    - id: tower1_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 3, name: DOut04_TOWER1 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 3, name: DIn04_TOWER1 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+
+    - id: tower2_feedback
+      type: actuator_feedback
+      command: { slave_id: 2, register_type: coil, offset: 7, name: DOut08_TOWER2 }
+      feedback: { slave_id: 2, register_type: discrete, offset: 11, name: DIn12_TOWER2 }
+      on_delay_sec: 0.5
+      off_delay_sec: 0.5
+
+    - id: liling_chiller
+      type: chiller_status
+      command: { slave_id: 3, register_type: holding, offset: 3, bit: 0, name: DOut01_LILING }
+      status_points:
+        - { slave_id: 51, register_type: holding, offset: 6010, name: COMP_A_STATUS }
+        - { slave_id: 51, register_type: holding, offset: 6020, name: COMP_B_STATUS }
+      starting_status: 1
+      running_status: 2
+      unloading_status: 9
+      stopped_status: 0
+      start_delay_sec: 3.0
+      stop_delay_sec: 2.0
+      requires:
+        - { slave_id: 2, register_type: discrete, offset: 8, name: DIn09_CWP1, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 2, name: DIn03_CHWP3, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 3, name: DIn04_TOWER1, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 11, name: DIn12_TOWER2, equals: 1 }
+
+    - id: tianji_chiller
+      type: chiller_status
+      command: { slave_id: 4, register_type: holding, offset: 3, bit: 0, name: DOut01_TIANJI }
+      status_points:
+        - { slave_id: 7, register_type: holding, offset: 101, name: COMP1_STATUS }
+        - { slave_id: 7, register_type: holding, offset: 102, name: COMP2_STATUS }
+      starting_status: 1
+      running_status: 3
+      unloading_status: 4
+      stopped_status: 0
+      start_delay_sec: 3.0
+      stop_delay_sec: 2.0
+      requires:
+        - { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 0, name: DIn01_CHWP1, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 3, name: DIn04_TOWER1, equals: 1 }
+        - { slave_id: 2, register_type: discrete, offset: 11, name: DIn12_TOWER2, equals: 1 }

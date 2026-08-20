@@ -7,6 +7,8 @@ class ProfileEnum(StrEnum):
     CONSTANT = "constant"
     TOGGLE = "toggle"
     PULSE = "pulse"
+    RANDOM = "random"
+    HOLD = "hold"
 
     @classmethod
     def is_valid(cls, value: str) -> bool:

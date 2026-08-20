@@ -1,0 +1,36 @@
+type: io_module
+model: JY_DAM0816D
+register_type: discrete
+interval_sec: 0.2
+
+description: >
+  JY-DAM0816D simulation model with 16 discrete inputs and 8 coil outputs.
+  DI pins use HOLD so the plant behavior layer or an external Modbus master can
+  own their values without the profile updater overwriting them.
+
+pins:
+  - { name: DIn01, offset: 0,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn02, offset: 1,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn03, offset: 2,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn04, offset: 3,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn05, offset: 4,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn06, offset: 5,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn07, offset: 6,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn08, offset: 7,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn09, offset: 8,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn10, offset: 9,  register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn11, offset: 10, register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn12, offset: 11, register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn13, offset: 12, register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn14, offset: 13, register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn15, offset: 14, register_type: discrete, value: 0, profile: { type: hold } }
+  - { name: DIn16, offset: 15, register_type: discrete, value: 0, profile: { type: hold } }
+
+  - { name: DOut01, offset: 0, register_type: coil, value: 0 }
+  - { name: DOut02, offset: 1, register_type: coil, value: 0 }
+  - { name: DOut03, offset: 2, register_type: coil, value: 0 }
+  - { name: DOut04, offset: 3, register_type: coil, value: 0 }
+  - { name: DOut05, offset: 4, register_type: coil, value: 0 }
+  - { name: DOut06, offset: 5, register_type: coil, value: 0 }
+  - { name: DOut07, offset: 6, register_type: coil, value: 0 }
+  - { name: DOut08, offset: 7, register_type: coil, value: 0 }

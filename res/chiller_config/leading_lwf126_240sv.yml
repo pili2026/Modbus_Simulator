@@ -1,0 +1,29 @@
+type: chiller
+model: LEADING_LWF126_240SV
+register_type: holding
+description: Minimal Leading LWF126/240SV status model for sequence-control simulation.
+
+pins:
+  - name: COMP_A_STATUS
+    offset: 6010
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: COMP_B_STATUS
+    offset: 6020
+    register_type: holding
+    value: 0
+    profile: { type: hold }
+
+  - name: CHILLED_WATER_RETURN_TEMP
+    offset: 6320
+    register_type: holding
+    value: 150
+    profile: { type: hold }
+
+  - name: CHILLED_WATER_SUPPLY_TEMP
+    offset: 6321
+    register_type: holding
+    value: 100
+    profile: { type: hold }

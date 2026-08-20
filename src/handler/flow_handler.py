@@ -1,19 +1,11 @@
 import struct
 
 from base.base_device_handler import BaseDeviceHandler
+from utils.float_codec import decode_float32_little_swap, encode_float32_little_swap
 from utils.log_formatter import simulate_log
 
 
 class SutoFlowHandler(BaseDeviceHandler):
-    """
-    Supports both SUTO and YUDEN models:
-    - FLOW_CONSUMPTION / FLOW_REVCONSUMPTION:
-        * If pin["type"] == "float" → use float32 (BYTEORDER_LITTLE_SWAP) for read/write
-        * Otherwise → use uint32 little-endian (legacy logic preserved)
-    - FLOW_DIRECTION:
-        * +1 increments the corresponding counter (consumption or revconsumption)
-    """
-
     SUPPORTED_MODELS = {"SUTO_FLOW", "YUDEN_FLOW"}
 
     def __init__(self, context, config: dict):
@@ -25,7 +17,7 @@ class SutoFlowHandler(BaseDeviceHandler):
         if self.config.get("model") not in self.SUPPORTED_MODELS:
             return
 
-        pins = {p.get("name"): p for p in self.config.get("pins", [])}
+        pins = {pin.get("name"): pin for pin in self.config.get("pins", [])}
         consumption_pin = pins.get("FLOW_CONSUMPTION")
         rev_pin = pins.get("FLOW_REVCONSUMPTION")
         direction_pin = pins.get("FLOW_DIRECTION")
@@ -35,12 +27,12 @@ class SutoFlowHandler(BaseDeviceHandler):
             return
 
         direction_addr = int(direction_pin["offset"])
-        w = self.context.getValues(fx_code, direction_addr, count=1)
-        if not w:
+        words = self.context.getValues(fx_code, direction_addr, count=1)
+        if not words:
             self._log(f"FLOW_DIRECTION read failed at addr={direction_addr}")
             return
 
-        raw = w[0]
+        raw = words[0]
         if not (0 <= raw <= 0xFFFF):
             self._log(f"[ERROR] Invalid raw direction value: {raw}")
             return
@@ -54,23 +46,22 @@ class SutoFlowHandler(BaseDeviceHandler):
 
     def _increment_counter(self, pin: dict, fx_code: int, label: str):
         addr = int(pin["offset"])
-        ptype = (pin.get("type") or "").lower()
-
+        pin_type = (pin.get("type") or "").lower()
         words = self.context.getValues(fx_code, addr, count=2)
         if not words or len(words) < 2:
             self._log(f"{label} read failed at addr={addr}")
             return
 
-        if ptype == "float":
-            current = self._decode_float32_le_swap(words)
-            newv = float(current) + 1.0
-            self.context.setValues(fx_code, addr, self._encode_float32_le_swap(newv))
-            self._log(f"{label} (float32) +=1 → {newv}")
+        if pin_type == "float":
+            current = decode_float32_little_swap(words)
+            new_value = float(current) + 1.0
+            self.context.setValues(fx_code, addr, encode_float32_little_swap(new_value))
+            self._log(f"{label} (float32) +=1 → {new_value}")
         else:
             current = self._decode_uint32_le(words)
-            newv = int(current) + 1
-            self.context.setValues(fx_code, addr, self._encode_uint32_le(newv))
-            self._log(f"{label} (uint32) +=1 → {newv}")
+            new_value = int(current) + 1
+            self.context.setValues(fx_code, addr, self._encode_uint32_le(new_value))
+            self._log(f"{label} (uint32) +=1 → {new_value}")
 
     def _log(self, msg: str):
         device_id = self.config.get("device_id", "Unknown")
@@ -85,21 +76,10 @@ class SutoFlowHandler(BaseDeviceHandler):
     def _encode_uint32_le(value: int) -> list[int]:
         return list(struct.unpack("<HH", struct.pack("<I", value)))
 
-    # === float32 with WORD-SWAP (LITTLE_SWAP) ===
     @staticmethod
     def _decode_float32_le_swap(words: list[int]) -> float:
-        """
-        Equivalent of minimalmodbus.BYTEORDER_LITTLE_SWAP: swap register word order.
-        words = [lo_word, hi_word]  →  byte sequence = [lo_word_LE][hi_word_LE]
-        LITTLE_SWAP requires swapping the words before decoding as little-endian float.
-        """
-        lo, hi = words
-        b = struct.pack("<HH", hi, lo)
-        return struct.unpack("<f", b)[0]
+        return decode_float32_little_swap(words)
 
     @staticmethod
     def _encode_float32_le_swap(value: float) -> list[int]:
-        b = struct.pack("<f", float(value))
-        lo_word = int.from_bytes(b[0:2], byteorder="little", signed=False)
-        hi_word = int.from_bytes(b[2:4], byteorder="little", signed=False)
-        return [hi_word, lo_word]
+        return encode_float32_little_swap(value)

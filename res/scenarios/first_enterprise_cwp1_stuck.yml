@@ -1,0 +1,4 @@
+faults:
+  - behavior: cwp1_feedback
+    mode: stuck_off
+overrides: []

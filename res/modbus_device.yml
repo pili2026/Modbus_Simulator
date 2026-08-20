@@ -52,4 +52,9 @@ devices:
   - id: DAE_PM210
     serial_port: /tmp/ttyV1
     slave_id: 11
-    model_file: power_meter/dam_pm210.yml
+    model_file: power_meter/dae_pm210.yml
+
+  - id: JY_DAM0816D
+    serial_port: /tmp/ttyV1
+    slave_id: 12
+    model_file: dio_config/jy_dam0816d.yml

@@ -1,6 +1,7 @@
 type: io_module
 model: 16_Pin_DI
 register_type: holding
+interval_sec: 0.5
 
 description: >
   Simulates a 16-channel Digital Input (DI) module.
@@ -14,99 +15,99 @@ pins:
     offset: 0
     profile:
       type: constant
-      value: 1         # Always ON
+      value: 1
 
   - name: DIn02
     offset: 1
     profile:
       type: constant
-      value: 0         # Always OFF
+      value: 0
 
   - name: DIn03
     offset: 2
     profile:
       type: toggle
-      interval: 2      # Flip every 2 seconds
+      interval: 2
 
   - name: DIn04
     offset: 3
     profile:
       type: toggle
-      interval: 5      # Flip every 5 seconds
+      interval: 5
 
   - name: DIn05
     offset: 4
     profile:
       type: pulse
-      high_time: 3     # ON for 3 seconds
-      low_time: 7      # OFF for 7 seconds
+      high_time: 3
+      low_time: 7
 
   - name: DIn06
     offset: 5
     profile:
       type: pulse
-      high_time: 1     # ON for 1 second
-      low_time: 1      # OFF for 1 second
+      high_time: 1
+      low_time: 1
 
   - name: DIn07
     offset: 6
     profile:
       type: constant
-      value: 1         # Always ON
+      value: 1
 
   - name: DIn08
     offset: 7
     profile:
       type: toggle
-      interval: 1      # Flip every second
+      interval: 1
 
   - name: DIn09
     offset: 8
     profile:
       type: toggle
-      interval: 10     # Flip every 10 seconds
+      interval: 10
 
   - name: DIn10
     offset: 9
     profile:
       type: pulse
-      high_time: 2     # ON for 2 seconds
-      low_time: 4      # OFF for 4 seconds
+      high_time: 2
+      low_time: 4
 
   - name: DIn11
     offset: 10
     profile:
       type: pulse
-      high_time: 5     # ON for 5 seconds
-      low_time: 2      # OFF for 2 seconds
+      high_time: 5
+      low_time: 2
 
   - name: DIn12
     offset: 11
     profile:
       type: constant
-      value: 0         # Always OFF
+      value: 0
 
   - name: DIn13
     offset: 12
     profile:
       type: toggle
-      interval: 3      # Flip every 3 seconds
+      interval: 3
 
   - name: DIn14
     offset: 13
     profile:
       type: constant
-      value: 1         # Always ON
+      value: 1
 
   - name: DIn15
     offset: 14
     profile:
       type: pulse
-      high_time: 6     # ON for 6 seconds
-      low_time: 6      # OFF for 6 seconds
+      high_time: 6
+      low_time: 6
 
   - name: DIn16
     offset: 15
     profile:
       type: toggle
-      interval: 0.5    # Flip every 0.5 seconds
+      interval: 0.5

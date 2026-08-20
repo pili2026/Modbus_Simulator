@@ -1,4 +1,4 @@
-import struct
+from utils.float_codec import encode_float32_little_swap
 
 
 class PinValueWriter:
@@ -21,8 +21,7 @@ class PinValueWriter:
             self._write_int(fx_code, addr, int(val), n1, n2, n3, log_ctx)
 
     def _write_float(self, fx_code: int, addr: int, val: float, log_ctx: str):
-        float_bytes = struct.pack(">f", val)
-        float_regs = list(struct.unpack(">HH", float_bytes))
+        float_regs = encode_float32_little_swap(float(val))
         self.context.setValues(fx_code, addr, float_regs)
         self.logger(f"{log_ctx} FLOAT = {val:.2f} → raw={float_regs}")
 
@@ -38,6 +37,7 @@ class PinValueWriter:
         self.logger(f"{log_ctx} (bit={bit}) val={val} → raw={new_val}")
 
     def _write_int(self, fx_code: int, addr: int, val: int, n1: float, n2: float, n3: float, log_ctx: str):
-        self.context.setValues(fx_code, addr, [val])
+        raw = int(val) & 0xFFFF
+        self.context.setValues(fx_code, addr, [raw])
         decoded_val = n1 + n2 * val + n3 * (val**2)
-        self.logger(f"{log_ctx} raw={val} → value={decoded_val:.2f}")
+        self.logger(f"{log_ctx} raw={raw} → value={decoded_val:.2f}")

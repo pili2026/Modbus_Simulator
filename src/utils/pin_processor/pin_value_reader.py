@@ -8,7 +8,12 @@ class PinValueReader:
 
     def get_current_value(self, pin: dict, fx_code: int, addr: int) -> int | float | None:
         profile = pin.get("profile", {})
-        if profile.get("type") != ProfileEnum.RAMP:
+        profile_type = str(profile.get("type", "")).lower()
+        if profile_type not in {
+            ProfileEnum.RAMP,
+            ProfileEnum.RANDOM,
+            ProfileEnum.HOLD,
+        }:
             return None
 
         try:
@@ -17,6 +22,10 @@ class PinValueReader:
                 if raw and len(raw) == 2:
                     return ProfileGenerator.decode_float(raw)
             else:
-                return self.context.getValues(fx_code, addr, count=1)[0]
+                values = self.context.getValues(fx_code, addr, count=1)
+                if values:
+                    return values[0]
         except Exception:
             return None
+
+        return None

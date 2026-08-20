@@ -18,30 +18,29 @@ class GenericModbusSimulator:
 
     def build_context(self) -> ModbusSlaveContext:
         builder = ModbusContextBuilder(self.config)
-        self.context, fx = builder.build()
+        self.context, _ = builder.build()
 
         device_type = self.config.get("type", "").lower()
-        base_addr = self.config.get("base_address", 0)
+        base_addr = int(self.config.get("base_address", 0))
+        interval_sec = float(self.config.get("interval_sec", 1.0))
 
         pins = self.config.get("pins", [])
-        has_profiles = any(isinstance(p.get("profile"), dict) for p in pins)
-
+        has_profiles = any(isinstance(pin.get("profile"), dict) for pin in pins)
         should_start_updater = has_profiles or any(
-            (p.get("name", "").startswith("DOut") or p.get("bit") is not None) for p in pins
+            (pin.get("name", "").startswith("DOut") or pin.get("bit") is not None)
+            for pin in pins
         )
         if should_start_updater:
             self.updater = ProfileUpdater(self.config, self.context)
-            self.updater.start(base_address=base_addr)
+            self.updater.start(base_address=base_addr, interval_sec=interval_sec)
 
         if device_type == "inverter":
             self._start_inverter_logic()
-
         return self.context
 
     def _start_inverter_logic(self):
         model = self.config.get("model", "")
         device_id = self.config.get("device_id", "Unknown")
-
         fx = FC_CODE_MAP["hr"]
         mapping = self.config.get("register_mapping", {})
         on_off_addr = mapping.get("on_off")
@@ -64,7 +63,7 @@ class GenericModbusSimulator:
                     self.context.setValues(fx, out_hz_addr, [current_out])
                     simulate_log(f"[{device_id}][{model}] ON={on_off}, CMD={cmd_hz}, OUT={current_out}")
                     time.sleep(1)
-                except Exception as e:
-                    simulate_log(f"[ERROR] {model} loop error: {e}")
+                except Exception as exc:
+                    simulate_log(f"[ERROR] {model} loop error: {exc}")
 
         threading.Thread(target=_loop, daemon=True).start()
