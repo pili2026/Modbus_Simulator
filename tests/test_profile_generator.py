@@ -33,6 +33,20 @@ class ProfileGeneratorTest(unittest.TestCase):
         }
         self.assertTrue(math.isclose(ProfileGenerator.generate(profile, 0), 30.0))
 
+    def test_ramp_phase_is_applied_once(self):
+        profile = {
+            "type": "ramp",
+            "step": 1,
+            "min": 0,
+            "max": 100,
+            "phase_deg": 180,
+        }
+        state = {}
+        first = ProfileGenerator.generate(profile, 0, 0, state)
+        second = ProfileGenerator.generate(profile, 1, first, state)
+        self.assertEqual(first, 51)
+        self.assertEqual(second, 52)
+
     def test_bounce_ramp_keeps_direction_in_runtime_state(self):
         profile = {"type": "ramp", "step": 4, "min": 0, "max": 10, "bounce": True}
         state = {}
