@@ -35,6 +35,8 @@ def normalize_register_type(register_type: str | None, default: str = "holding")
     return normalized
 
 
-def fx_code_for_register_type(register_type: str | None, default: str = "holding") -> int:
+def fx_code_for_register_type(
+    register_type: str | None, default: str = "holding"
+) -> int:
     normalized = normalize_register_type(register_type, default)
     return FC_CODE_MAP[REGISTER_TYPE_MAP[normalized]]

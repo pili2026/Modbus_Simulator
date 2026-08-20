@@ -9,8 +9,7 @@ class FakeContext:
 
     def getValues(self, fx_code, address, count=1):
         return [
-            self.values.get((fx_code, address + offset), 0)
-            for offset in range(count)
+            self.values.get((fx_code, address + offset), 0) for offset in range(count)
         ]
 
     def setValues(self, fx_code, address, values):

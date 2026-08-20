@@ -28,7 +28,9 @@ class PinValueWriter:
     def _write_bit(self, fx_code: int, addr: int, bit: int, val: int, log_ctx: str):
         values = self.context.getValues(fx_code, addr, count=1)
         if not values:
-            self.logger(f"[WARN] Cannot read address {addr} from fx={fx_code}, skipping.")
+            self.logger(
+                f"[WARN] Cannot read address {addr} from fx={fx_code}, skipping."
+            )
             return
         origin_val = values[0]
         mask = 1 << bit
@@ -36,7 +38,16 @@ class PinValueWriter:
         self.context.setValues(fx_code, addr, [new_val])
         self.logger(f"{log_ctx} (bit={bit}) val={val} → raw={new_val}")
 
-    def _write_int(self, fx_code: int, addr: int, val: int, n1: float, n2: float, n3: float, log_ctx: str):
+    def _write_int(
+        self,
+        fx_code: int,
+        addr: int,
+        val: int,
+        n1: float,
+        n2: float,
+        n3: float,
+        log_ctx: str,
+    ):
         raw = int(val) & 0xFFFF
         self.context.setValues(fx_code, addr, [raw])
         decoded_val = n1 + n2 * val + n3 * (val**2)

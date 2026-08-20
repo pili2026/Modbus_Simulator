@@ -56,7 +56,9 @@ class ProfileUpdater:
                     for handler in self.pin_handlers:
                         try:
                             if handler.should_handle(model, pin):
-                                handler.handle(self.context, fx_code, addr, pin, self._log, log_ctx)
+                                handler.handle(
+                                    self.context, fx_code, addr, pin, self._log, log_ctx
+                                )
                                 handled = True
                                 break
                         except Exception as exc:
@@ -75,7 +77,9 @@ class ProfileUpdater:
 
                     state_key = (str(name), offset)
                     runtime_state = self.profile_states.setdefault(state_key, {})
-                    val = ProfileGenerator.generate(profile, elapsed, current_val, runtime_state)
+                    val = ProfileGenerator.generate(
+                        profile, elapsed, current_val, runtime_state
+                    )
 
                     carry_to = None
                     try:
@@ -109,12 +113,16 @@ class ProfileUpdater:
                         carry_count = 0
                         if theoretical_next > max_v:
                             try:
-                                carry_count = int((theoretical_next - min_v) // wrap_range) + 1
+                                carry_count = (
+                                    int((theoretical_next - min_v) // wrap_range) + 1
+                                )
                             except Exception:
                                 carry_count = 1
 
                             try:
-                                wrapped = min_v + int((theoretical_next - min_v) % wrap_range)
+                                wrapped = min_v + int(
+                                    (theoretical_next - min_v) % wrap_range
+                                )
                             except Exception:
                                 wrapped = min_v
                             val = wrapped
@@ -127,18 +135,32 @@ class ProfileUpdater:
                                     break
 
                             if target_pin:
-                                fx_target = _fx_for_pin(target_pin, default_register_type)
-                                target_addr = base_address + int(target_pin.get("offset", 0))
-                                current_hi = self.reader.get_current_value(target_pin, fx_target, target_addr)
+                                fx_target = _fx_for_pin(
+                                    target_pin, default_register_type
+                                )
+                                target_addr = base_address + int(
+                                    target_pin.get("offset", 0)
+                                )
+                                current_hi = self.reader.get_current_value(
+                                    target_pin, fx_target, target_addr
+                                )
                                 try:
                                     current_hi = int(current_hi)
                                 except Exception:
                                     current_hi = 0
 
                                 new_hi = (current_hi + carry_count) % 65536
-                                self.writer.write(target_pin, fx_target, target_addr, new_hi, log_ctx + " [carry]")
+                                self.writer.write(
+                                    target_pin,
+                                    fx_target,
+                                    target_addr,
+                                    new_hi,
+                                    log_ctx + " [carry]",
+                                )
                             else:
-                                self._log(f"{log_ctx} [WARN] carry_to target '{carry_to}' not found")
+                                self._log(
+                                    f"{log_ctx} [WARN] carry_to target '{carry_to}' not found"
+                                )
 
                     self.writer.write(pin, fx_code, addr, val, log_ctx)
 
@@ -146,7 +168,9 @@ class ProfileUpdater:
                     try:
                         handler.handle(fx_code_for_register_type("holding"))
                     except Exception as exc:
-                        self._log(f"[{device_id}][{model}] [WARN] device handler error: {exc}")
+                        self._log(
+                            f"[{device_id}][{model}] [WARN] device handler error: {exc}"
+                        )
 
                 tick += 1
                 time.sleep(interval_sec)

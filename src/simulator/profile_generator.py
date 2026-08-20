@@ -50,12 +50,8 @@ class ProfileGenerator:
         if "phase_deg" in profile and not runtime.get("phase_applied", False):
             span = max_val - min_val
             if span > 0:
-                phase_fraction = (
-                    float(profile.get("phase_deg", 0.0)) % 360.0
-                ) / 360.0
-                current = min_val + (
-                    (current - min_val + span * phase_fraction) % span
-                )
+                phase_fraction = (float(profile.get("phase_deg", 0.0)) % 360.0) / 360.0
+                current = min_val + ((current - min_val + span * phase_fraction) % span)
             runtime["phase_applied"] = True
 
         if profile.get("bounce", False):

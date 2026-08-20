@@ -17,7 +17,9 @@ class ModbusContextBuilder:
     def __init__(self, config: dict):
         self.config = config
         self.device_type = config.get("type", "").lower()
-        self.register_type = normalize_register_type(config.get("register_type", "holding"))
+        self.register_type = normalize_register_type(
+            config.get("register_type", "holding")
+        )
         self.reg_key = REGISTER_TYPE_MAP[self.register_type]
         self.fx_code = FC_CODE_MAP[self.reg_key]
 
@@ -93,7 +95,10 @@ class ModbusContextBuilder:
         if self.device_type != "inverter":
             return {}
         raw_map = self.config.get("initial_registers", {}) or {}
-        return {(self.fx_code, int(addr)): int(value) & 0xFFFF for addr, value in raw_map.items()}
+        return {
+            (self.fx_code, int(addr)): int(value) & 0xFFFF
+            for addr, value in raw_map.items()
+        }
 
     def _write_full_initials(self, context: ModbusSlaveContext, pins: list[dict]):
         base_addr = int(self.config.get("base_address", 0))
@@ -108,7 +113,9 @@ class ModbusContextBuilder:
 
             fx_code = self._fx_for_pin(pin)
             if pin_type == "float":
-                context.setValues(fx_code, addr, encode_float32_little_swap(float(raw_value)))
+                context.setValues(
+                    fx_code, addr, encode_float32_little_swap(float(raw_value))
+                )
             elif pin_type in ("uint32", "int32"):
                 signed = pin_type == "int32"
                 words = self._encode_int32_le(int(raw_value), signed)

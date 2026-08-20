@@ -163,9 +163,13 @@ class SimulationWorld:
             return
 
         if behavior_type == "actuator_feedback":
-            self._schedule_actuator(behavior_id, behavior, command_value, generation, now)
+            self._schedule_actuator(
+                behavior_id, behavior, command_value, generation, now
+            )
         elif behavior_type == "chiller_status":
-            self._schedule_chiller(behavior_id, behavior, command_value, generation, now)
+            self._schedule_chiller(
+                behavior_id, behavior, command_value, generation, now
+            )
         else:
             raise ValueError(f"Unsupported simulation behavior type: {behavior_type}")
 
@@ -251,9 +255,7 @@ class SimulationWorld:
                 return
             unloading = int(behavior.get("unloading_status", 9))
             stopped = int(behavior.get("stopped_status", 0))
-            stop_delay = self._effective_delay(
-                behavior_id, behavior, "stop_delay_sec"
-            )
+            stop_delay = self._effective_delay(behavior_id, behavior, "stop_delay_sec")
             self._schedule_status_group(
                 now, behavior_id, generation, status_points, unloading
             )

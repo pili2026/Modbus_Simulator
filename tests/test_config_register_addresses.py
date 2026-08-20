@@ -87,9 +87,7 @@ class ConfigRegisterAddressTest(unittest.TestCase):
         path = RES / "flowmeter_config" / "suto_flow.yml"
         config = yaml.safe_load(path.read_text(encoding="utf-8"))
         context, _ = ModbusContextBuilder(config).build()
-        pin = next(
-            pin for pin in config["pins"] if pin["name"] == "FLOW_VALUE"
-        )
+        pin = next(pin for pin in config["pins"] if pin["name"] == "FLOW_VALUE")
         reader = PinValueReader(context)
         current = reader.get_current_value(pin, 3, int(pin["offset"]))
         self.assertAlmostEqual(current, 0.0, places=5)

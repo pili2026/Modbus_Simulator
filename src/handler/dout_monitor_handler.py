@@ -15,7 +15,11 @@ class DOutMonitorHandler(BasePinHandler):
         # 1. Model is IMA_C and the name starts with "DOut"
         # 2. register_type is "coil" (e.g., JY_DAM0204)
         # 3. Name contains "dout" (case-insensitive loose match)
-        return (model.upper() == "IMA_C" and name.startswith("dout")) or (regtype == "coil") or ("dout" in name)
+        return (
+            (model.upper() == "IMA_C" and name.startswith("dout"))
+            or (regtype == "coil")
+            or ("dout" in name)
+        )
 
     def handle(self, context, fx_code: int, addr: int, pin: dict, log_fn, log_ctx: str):
         bit = pin.get("bit")
@@ -23,7 +27,9 @@ class DOutMonitorHandler(BasePinHandler):
         try:
             values = context.getValues(fx_code, addr, count=1)
         except Exception as e:
-            log_fn(f"[ERROR] DOutMonitorHandler: failed to read fx={fx_code}, addr={addr} ({e})")
+            log_fn(
+                f"[ERROR] DOutMonitorHandler: failed to read fx={fx_code}, addr={addr} ({e})"
+            )
             return
 
         if not values:

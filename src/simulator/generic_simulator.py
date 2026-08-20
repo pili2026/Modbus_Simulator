@@ -61,7 +61,9 @@ class GenericModbusSimulator:
                     current_out = max(0, min(cmd_hz, current_out))
 
                     self.context.setValues(fx, out_hz_addr, [current_out])
-                    simulate_log(f"[{device_id}][{model}] ON={on_off}, CMD={cmd_hz}, OUT={current_out}")
+                    simulate_log(
+                        f"[{device_id}][{model}] ON={on_off}, CMD={cmd_hz}, OUT={current_out}"
+                    )
                     time.sleep(1)
                 except Exception as exc:
                     simulate_log(f"[ERROR] {model} loop error: {exc}")

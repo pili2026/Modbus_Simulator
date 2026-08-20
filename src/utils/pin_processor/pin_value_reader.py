@@ -6,7 +6,9 @@ class PinValueReader:
     def __init__(self, context):
         self.context = context
 
-    def get_current_value(self, pin: dict, fx_code: int, addr: int) -> int | float | None:
+    def get_current_value(
+        self, pin: dict, fx_code: int, addr: int
+    ) -> int | float | None:
         profile = pin.get("profile", {})
         profile_type = str(profile.get("type", "")).lower()
         if profile_type not in {
