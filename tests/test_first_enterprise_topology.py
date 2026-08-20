@@ -19,6 +19,39 @@ class FirstEnterpriseTopologyTest(unittest.TestCase):
         slaves = sorted(int(device["slave_id"]) for device in config["devices"])
         self.assertEqual(slaves, [1, 2, 3, 4, 5, 7, 8, 51])
 
+    def test_site_maps_all_eight_remote_outputs_to_run_feedbacks(self):
+        config = yaml.safe_load(
+            (RES / "sites" / "first_enterprise.yml").read_text(encoding="utf-8")
+        )
+        behaviors = {
+            behavior["id"]: behavior
+            for behavior in config["simulation"]["behaviors"]
+            if behavior.get("type") == "actuator_feedback"
+        }
+
+        expected = {
+            "chwp1_feedback": (0, 0),
+            "chwp2_feedback": (1, 1),
+            "chwp3_feedback": (2, 2),
+            "tower1_feedback": (3, 3),
+            "cwp1_feedback": (4, 8),
+            "cwp2_feedback": (5, 9),
+            "cwp3_feedback": (6, 10),
+            "tower2_feedback": (7, 11),
+        }
+
+        for behavior_id, (do_offset, di_offset) in expected.items():
+            with self.subTest(behavior=behavior_id):
+                behavior = behaviors[behavior_id]
+                command = behavior["command"]
+                feedback = behavior["feedback"]
+                self.assertEqual(int(command["slave_id"]), 2)
+                self.assertEqual(command["register_type"], "coil")
+                self.assertEqual(int(command["offset"]), do_offset)
+                self.assertEqual(int(feedback["slave_id"]), 2)
+                self.assertEqual(feedback["register_type"], "discrete")
+                self.assertEqual(int(feedback["offset"]), di_offset)
+
     def test_fum01_registers_decode_like_talos_driver(self):
         config = yaml.safe_load(
             (RES / "sensor_config" / "fum01.yml").read_text(encoding="utf-8")
