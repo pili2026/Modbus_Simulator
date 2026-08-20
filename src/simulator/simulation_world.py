@@ -80,6 +80,7 @@ class SimulationWorld:
         self.running = False
         self._thread: threading.Thread | None = None
         self._last_commands: dict[str, int] = {}
+        self._blocked_on: set[str] = set()
         self._generation: dict[str, int] = {
             behavior_id: 0 for behavior_id in self.behaviors
         }
@@ -126,20 +127,40 @@ class SimulationWorld:
             command = PointRef.from_dict(behavior["command"])
             current = self.read_point(command)
             previous = self._last_commands.get(behavior_id, current)
-            if current == previous:
+
+            if current != previous:
+                self._last_commands[behavior_id] = current
+                self._record_point_change(
+                    behavior_id,
+                    command,
+                    previous,
+                    current,
+                    source="master_command",
+                )
+                self._generation[behavior_id] += 1
+                generation = self._generation[behavior_id]
+                self._handle_command(behavior_id, behavior, current, generation, now)
                 continue
 
-            self._last_commands[behavior_id] = current
-            self._record_point_change(
-                behavior_id,
-                command,
-                previous,
-                current,
-                source="master_command",
-            )
-            self._generation[behavior_id] += 1
-            generation = self._generation[behavior_id]
-            self._handle_command(behavior_id, behavior, current, generation, now)
+            # A start command can arrive before its permissives. Keep the asserted
+            # command pending and retry once every required point later becomes valid.
+            # After the behavior has started, dropping a permissive does not
+            # automatically stop it; shutdown remains owned by the command/fault model.
+            if current and behavior_id in self._blocked_on:
+                if not self._interlocks_satisfied(behavior):
+                    continue
+
+                self._blocked_on.discard(behavior_id)
+                self.history.record(
+                    {
+                        "behavior": behavior_id,
+                        "source": "interlock_released",
+                        "old": 0,
+                        "new": current,
+                    }
+                )
+                generation = self._generation[behavior_id]
+                self._handle_command(behavior_id, behavior, current, generation, now)
 
     def _handle_command(
         self,
@@ -151,16 +172,22 @@ class SimulationWorld:
     ):
         behavior_type = behavior.get("type", "actuator_feedback")
 
-        if command_value and not self._interlocks_satisfied(behavior):
-            self.history.record(
-                {
-                    "behavior": behavior_id,
-                    "source": "interlock_blocked",
-                    "old": 0,
-                    "new": command_value,
-                }
-            )
-            return
+        if command_value:
+            if not self._interlocks_satisfied(behavior):
+                if behavior_id not in self._blocked_on:
+                    self.history.record(
+                        {
+                            "behavior": behavior_id,
+                            "source": "interlock_blocked",
+                            "old": 0,
+                            "new": command_value,
+                        }
+                    )
+                self._blocked_on.add(behavior_id)
+                return
+            self._blocked_on.discard(behavior_id)
+        else:
+            self._blocked_on.discard(behavior_id)
 
         if behavior_type == "actuator_feedback":
             self._schedule_actuator(
