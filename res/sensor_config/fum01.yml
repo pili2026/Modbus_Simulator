@@ -1,0 +1,42 @@
+type: sensor
+model: FUM01
+register_type: holding
+description: >
+  Minimal First Enterprise FUM01/CAM-3000 simulator model aligned with Talos
+  driver offsets. f32_be values are represented as explicit high/low 16-bit
+  registers so the simulator's default LITTLE_SWAP float codec remains unchanged.
+
+pins:
+  # FLOW_VALUE @ 1, f32_be = 170.51 m3/h
+  - { name: FLOW_VALUE_HI, offset: 1, value: 17194 }
+  - { name: FLOW_VALUE_LO, offset: 2, value: 33423 }
+
+  # FLOW_CONSUMPTION @ 8, u32_le = 108476 m3
+  - { name: FLOW_CONSUMPTION, offset: 8, type: uint32, value: 108476 }
+
+  # TEMP_IN @ 33, f32_be = 11.30 C
+  - { name: TEMP_IN_HI, offset: 33, value: 16692 }
+  - { name: TEMP_IN_LO, offset: 34, value: 52429 }
+
+  # TEMP_OUT @ 35, f32_be = 9.78 C
+  - { name: TEMP_OUT_HI, offset: 35, value: 16668 }
+  - { name: TEMP_OUT_LO, offset: 36, value: 31457 }
+
+  # AI3 @ 37, f32_be = 28.05 C
+  - { name: AI3_HI, offset: 37, value: 16864 }
+  - { name: AI3_LO, offset: 38, value: 26214 }
+
+  # AI4 @ 39, f32_be = 30.29 C
+  - { name: AI4_HI, offset: 39, value: 16882 }
+  - { name: AI4_LO, offset: 40, value: 20972 }
+
+  # AI5 @ 41, f32_be = -1.50 C
+  - { name: AI5_HI, offset: 41, value: 49088 }
+  - { name: AI5_LO, offset: 42, value: 0 }
+
+  # SIGNAL_QUALITY @ 91: high byte gain step 3, low byte quality 86
+  - { name: SIGNAL_QUALITY, offset: 91, value: 854 }
+
+  # TRANS_RATIO @ 97, f32_be = 102.3 percent
+  - { name: TRANS_RATIO_HI, offset: 97, value: 17100 }
+  - { name: TRANS_RATIO_LO, offset: 98, value: 39322 }
