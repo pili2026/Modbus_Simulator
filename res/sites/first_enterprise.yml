@@ -71,8 +71,6 @@ simulation:
       feedback: { slave_id: 2, register_type: discrete, offset: 0, name: DIn01_CHWP1 }
       on_delay_sec: 0.5
       off_delay_sec: 0.5
-      requires:
-        - { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2, equals: 1 }
 
     - id: chwp2_feedback
       type: actuator_feedback
@@ -87,8 +85,6 @@ simulation:
       feedback: { slave_id: 2, register_type: discrete, offset: 2, name: DIn03_CHWP3 }
       on_delay_sec: 0.5
       off_delay_sec: 0.5
-      requires:
-        - { slave_id: 2, register_type: discrete, offset: 8, name: DIn09_CWP1, equals: 1 }
 
     - id: tower1_feedback
       type: actuator_feedback
@@ -116,11 +112,6 @@ simulation:
       stopped_status: 0
       start_delay_sec: 3.0
       stop_delay_sec: 2.0
-      requires:
-        - { slave_id: 2, register_type: discrete, offset: 8, name: DIn09_CWP1, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 2, name: DIn03_CHWP3, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 3, name: DIn04_TOWER1, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 11, name: DIn12_TOWER2, equals: 1 }
 
     - id: tianji_chiller
       type: chiller_status
@@ -134,8 +125,3 @@ simulation:
       stopped_status: 0
       start_delay_sec: 3.0
       stop_delay_sec: 2.0
-      requires:
-        - { slave_id: 2, register_type: discrete, offset: 9, name: DIn10_CWP2, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 0, name: DIn01_CHWP1, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 3, name: DIn04_TOWER1, equals: 1 }
-        - { slave_id: 2, register_type: discrete, offset: 11, name: DIn12_TOWER2, equals: 1 }
