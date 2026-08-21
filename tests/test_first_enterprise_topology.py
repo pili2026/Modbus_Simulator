@@ -52,6 +52,52 @@ class FirstEnterpriseTopologyTest(unittest.TestCase):
                 self.assertEqual(feedback["register_type"], "discrete")
                 self.assertEqual(int(feedback["offset"]), di_offset)
 
+    def test_site_behaviors_do_not_duplicate_talos_sequence_interlocks(self):
+        config = yaml.safe_load(
+            (RES / "sites" / "first_enterprise.yml").read_text(encoding="utf-8")
+        )
+        behaviors = {
+            behavior["id"]: behavior for behavior in config["simulation"]["behaviors"]
+        }
+
+        direct_feedback_behaviors = {
+            "cwp1_feedback",
+            "cwp2_feedback",
+            "cwp3_feedback",
+            "chwp1_feedback",
+            "chwp2_feedback",
+            "chwp3_feedback",
+            "tower1_feedback",
+            "tower2_feedback",
+            "liling_chiller",
+            "tianji_chiller",
+        }
+
+        for behavior_id in direct_feedback_behaviors:
+            with self.subTest(behavior=behavior_id):
+                self.assertNotIn("requires", behaviors[behavior_id])
+
+        self.assertEqual(
+            behaviors["liling_chiller"]["command"],
+            {
+                "slave_id": 3,
+                "register_type": "holding",
+                "offset": 3,
+                "bit": 0,
+                "name": "DOut01_LILING",
+            },
+        )
+        self.assertEqual(
+            behaviors["tianji_chiller"]["command"],
+            {
+                "slave_id": 4,
+                "register_type": "holding",
+                "offset": 3,
+                "bit": 0,
+                "name": "DOut01_TIANJI",
+            },
+        )
+
     def test_fum01_registers_decode_like_talos_driver(self):
         config = yaml.safe_load(
             (RES / "sensor_config" / "fum01.yml").read_text(encoding="utf-8")
