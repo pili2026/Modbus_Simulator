@@ -8,14 +8,16 @@ profile keyed by minute of the hour, repeating every hour::
         - {minute: 0, kw: 150}
         - {minute: 6, kw: 230}
 
-Each tick the handler integrates the schedule over the time elapsed since the
-previous tick (measured on a monotonic clock) into a float kWh accumulator, and
-writes the 48-bit big-endian energy counter (``KWH_W1_HI``/``KWH_W2_MD``/
-``KWH_W3_LO``) plus instant power ``KW``. Without the block it does nothing.
+Each tick the handler integrates the schedule exactly over the time elapsed
+since the previous tick (measured on a monotonic clock) into an integer raw
+counter plus a fractional remainder, and writes the 48-bit big-endian energy
+counter (``KWH_W1_HI``/``KWH_W2_MD``/``KWH_W3_LO``) in one datastore update,
+plus instant power ``KW``. Without the block it does nothing.
 """
 
 import math
 import time
+from fractions import Fraction
 from typing import Callable
 
 from base.base_device_handler import BaseDeviceHandler
@@ -26,14 +28,22 @@ from utils.log_formatter import simulate_log
 # Talos res/driver/adtek_cpm_10.yml: tables.energy_table and
 # energy_post_multiplier. Factor = energy_table[ENERGY_INDEX] * 0.001, which
 # scales both the 48-bit kWh counter (modes.kwh: auto) and the Kw register.
-CPM10_ENERGY_TABLE = (0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0)
-CPM10_ENERGY_POST_MULTIPLIER = 0.001
+# Kept as exact rationals so the integration below has no rounding error.
+CPM10_ENERGY_TABLE = (
+    Fraction(1, 10),
+    Fraction(1),
+    Fraction(10),
+    Fraction(100),
+    Fraction(1000),
+    Fraction(10000),
+    Fraction(100000),
+    Fraction(1000000),
+)
+CPM10_ENERGY_POST_MULTIPLIER = Fraction(1, 1000)
 
-SECONDS_PER_HOUR = 3600.0
+SECONDS_PER_HOUR = 3600
 U48_MOD = 1 << 48
 I16_MAX = 32767
-# Guards floor() against float sums that land a hair below a whole raw unit.
-RAW_EPSILON = 1e-6
 
 
 class LoadScheduleConfigError(ValueError):
@@ -93,28 +103,32 @@ def parse_load_schedule(block, where: str = "load_schedule") -> list[tuple[int, 
 
 
 class HourlySchedule:
-    """Piecewise-constant kW over the hour, with exact interval integration."""
+    """Piecewise-constant kW over the hour, with exact interval integration.
+
+    Times and energies are ``Fraction``s: float clock readings convert to them
+    exactly, so the integral has no rounding error whatever the epoch value.
+    """
 
     def __init__(self, steps: list[tuple[int, float]]):
         self.steps = steps
-        self.starts = [m * 60.0 for m, _ in steps]
-        self.kws = [kw for _, kw in steps]
-        self.ends = self.starts[1:] + [SECONDS_PER_HOUR]
+        self.starts = [Fraction(m * 60) for m, _ in steps]
+        self.kws = [Fraction(kw) for _, kw in steps]
+        self.ends = self.starts[1:] + [Fraction(SECONDS_PER_HOUR)]
         # Cumulative kWh at the start of each segment, and for a whole hour.
-        self.cum_kwh = []
-        total = 0.0
+        self.cum_kwh: list[Fraction] = []
+        total = Fraction(0)
         for start, end, kw in zip(self.starts, self.ends, self.kws):
             self.cum_kwh.append(total)
             total += kw * (end - start) / SECONDS_PER_HOUR
         self.hour_kwh = total
 
-    def kw_at(self, wall_ts: float) -> float:
-        return self.kws[self._segment(wall_ts % SECONDS_PER_HOUR)]
+    def kw_at(self, wall_ts: float) -> Fraction:
+        return self.kws[self._segment(Fraction(wall_ts) % SECONDS_PER_HOUR)]
 
-    def energy_kwh(self, wall_start: float, wall_end: float) -> float:
+    def energy_kwh(self, wall_start: Fraction, wall_end: Fraction) -> Fraction:
         """kWh delivered by the schedule over the wall-clock interval."""
         if wall_end <= wall_start:
-            return 0.0
+            return Fraction(0)
         h0 = math.floor(wall_start / SECONDS_PER_HOUR)
         h1 = math.floor(wall_end / SECONDS_PER_HOUR)
         return (
@@ -123,14 +137,14 @@ class HourlySchedule:
             - self._cumulative(wall_start - h0 * SECONDS_PER_HOUR)
         )
 
-    def _segment(self, sec_of_hour: float) -> int:
+    def _segment(self, sec_of_hour: Fraction) -> int:
         idx = 0
         for i, start in enumerate(self.starts):
             if sec_of_hour >= start:
                 idx = i
         return idx
 
-    def _cumulative(self, sec_of_hour: float) -> float:
+    def _cumulative(self, sec_of_hour: Fraction) -> Fraction:
         idx = self._segment(sec_of_hour)
         return (
             self.cum_kwh[idx]
@@ -215,8 +229,9 @@ class LoadScheduleHandler(BaseDeviceHandler):
         max_kw = max(self.schedule.kws)
         if round(max_kw / self.kwh_per_raw) > I16_MAX:
             raise LoadScheduleConfigError(
-                f"{where}: kw {max_kw} exceeds the i16 KW register at "
-                f"ENERGY_INDEX {energy_index} (max {I16_MAX * self.kwh_per_raw:g} kW)"
+                f"{where}: kw {float(max_kw):g} exceeds the i16 KW register at "
+                f"ENERGY_INDEX {energy_index} "
+                f"(max {float(I16_MAX * self.kwh_per_raw):g} kW)"
             )
 
         base_address = int(config.get("base_address", 0))
@@ -232,17 +247,39 @@ class LoadScheduleHandler(BaseDeviceHandler):
             )
             for name in (*self.ENERGY_PINS, self.KW_PIN)
         }
+        self._check_energy_words_contiguous(where)
+        self.energy_fx, self.energy_addr = self._addr[self.ENERGY_PINS[0]]
 
         hi, md, lo = (
             int(pin.get("value", 0) or 0) & 0xFFFF for pin in self.energy_pins
         )
-        self.acc_raw = float((hi << 32) | (md << 16) | lo)
+        # Whole raw units as an int; the fraction of a raw unit separately, in
+        # [0, 1), so accuracy does not depend on the size of the counter.
+        self.counter_raw = (hi << 32) | (md << 16) | lo
+        self.remainder_raw = Fraction(0)
         self.last_mono: float | None = None
         self.pin_claim = _ClaimedPins(frozenset((*self.ENERGY_PINS, self.KW_PIN)))
         self._log(
             f"active: steps(minute, kW)={self.schedule.steps} "
-            f"kwh_per_raw={self.kwh_per_raw:g} hour_kwh={self.schedule.hour_kwh:g}"
+            f"kwh_per_raw={float(self.kwh_per_raw):g} "
+            f"hour_kwh={float(self.schedule.hour_kwh):g}"
         )
+
+    def _check_energy_words_contiguous(self, where: str):
+        """The counter is published in one setValues, so W1/W2/W3 must be
+        consecutive registers of one register type, in that order."""
+        fx0, addr0 = self._addr[self.ENERGY_PINS[0]]
+        expected = [(fx0, addr0 + i) for i in range(len(self.ENERGY_PINS))]
+        actual = [self._addr[name] for name in self.ENERGY_PINS]
+        if actual != expected:
+            layout = ", ".join(
+                f"{name}@{addr} (fx={fx})"
+                for name, (fx, addr) in zip(self.ENERGY_PINS, actual)
+            )
+            raise LoadScheduleConfigError(
+                f"{where}: energy pins must be contiguous registers of one type "
+                f"in the order {list(self.ENERGY_PINS)}, got {layout}"
+            )
 
     def handle(self, fx_code: int):
         if not self.active:
@@ -251,25 +288,28 @@ class LoadScheduleHandler(BaseDeviceHandler):
         now_mono = self.monotonic_clock()
         now_wall = self.wall_clock()
         if self.last_mono is not None:
-            dt = max(0.0, now_mono - self.last_mono)
-            kwh = self.schedule.energy_kwh(now_wall - dt, now_wall)
-            self.acc_raw += kwh / self.kwh_per_raw
+            dt = max(Fraction(0), Fraction(now_mono) - Fraction(self.last_mono))
+            wall_end = Fraction(now_wall)
+            kwh = self.schedule.energy_kwh(wall_end - dt, wall_end)
+            self.remainder_raw += kwh / self.kwh_per_raw
+            whole = math.floor(self.remainder_raw)
+            self.counter_raw += whole
+            self.remainder_raw -= whole
         self.last_mono = now_mono
 
-        raw = math.floor(self.acc_raw + RAW_EPSILON) % U48_MOD
+        raw = self.counter_raw % U48_MOD
         words = [(raw >> 32) & 0xFFFF, (raw >> 16) & 0xFFFF, raw & 0xFFFF]
-        for name, word in zip(self.ENERGY_PINS, words):
-            fx, addr = self._addr[name]
-            self.context.setValues(fx, addr, [word])
+        # One datastore update, so a concurrent read never sees a torn counter.
+        self.context.setValues(self.energy_fx, self.energy_addr, words)
 
         kw = self.schedule.kw_at(now_wall)
-        kw_raw = int(round(kw / self.kwh_per_raw))
+        kw_raw = round(kw / self.kwh_per_raw)
         fx, addr = self._addr[self.KW_PIN]
         self.context.setValues(fx, addr, [kw_raw & 0xFFFF])
 
         self._log(
-            f"load_schedule kw={kw:g} (raw={kw_raw}) "
-            f"kwh={raw * self.kwh_per_raw:.1f} words={words}"
+            f"load_schedule kw={float(kw):g} (raw={kw_raw}) "
+            f"kwh={float(raw * self.kwh_per_raw):.1f} words={words}"
         )
 
     def _log(self, msg: str):

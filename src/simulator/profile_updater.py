@@ -19,6 +19,15 @@ def _fx_for_pin(pin: dict, default_register_type: str = "holding") -> int:
     return fx_code_for_register_type(pin.get("register_type"), default_register_type)
 
 
+# Pin types that do not occupy exactly one plain 16-bit word.
+_NON_WORD_PIN_TYPES = {"float", "float32_wordswap", "float32_be", "uint32", "int32"}
+
+
+def _is_plain_word(pin: dict) -> bool:
+    pin_type = (pin.get("type") or "").lower()
+    return pin_type not in _NON_WORD_PIN_TYPES and pin.get("bit") is None
+
+
 def ramp_wrap_and_carry(
     current: float, step: float, min_v: int, max_v: int
 ) -> tuple[int | None, int]:
@@ -60,6 +69,47 @@ class ProfileUpdater:
         # energy/KW pins, so their ramp/wave profiles are skipped.
         self.pin_handlers = [load_schedule.pin_claim, DOutMonitorHandler()]
         self.device_handlers = [SutoFlowHandler(context, config), load_schedule]
+        self.atomic_carry_pins = self._find_atomic_carry_pins()
+
+    def _find_atomic_carry_pins(self) -> set[tuple[str, int]]:
+        """Ramp pins whose ``carry_to`` target is the adjacent plain word.
+
+        Those publish the low word and the carried word in one setValues, so a
+        concurrent Modbus read never sees the carry without the wrap. Any other
+        carry target keeps two writes; warn once here that it is not atomic.
+        """
+        pin_list = self.config.get("pins", []) or []
+        default_register_type = self.config.get("register_type", "holding")
+        device_id = self.config.get("device_id", "Unknown")
+        model = self.config.get("model", "")
+        atomic: set[tuple[str, int]] = set()
+        for pin in pin_list:
+            profile = pin.get("profile")
+            if not isinstance(profile, dict):
+                continue
+            carry_to = profile.get("carry_to")
+            if str(profile.get("type", "")).lower() != "ramp" or not carry_to:
+                continue
+            target = next((p for p in pin_list if p.get("name") == carry_to), None)
+            if target is None:
+                continue  # reported at the first overflow, as before
+            offset = int(pin.get("offset", 0))
+            adjacent = (
+                abs(int(target.get("offset", 0)) - offset) == 1
+                and _fx_for_pin(pin, default_register_type)
+                == _fx_for_pin(target, default_register_type)
+                and _is_plain_word(pin)
+                and _is_plain_word(target)
+            )
+            if adjacent:
+                atomic.add((str(pin.get("name")), offset))
+            else:
+                self._log(
+                    f"[{device_id}][{model}] {pin.get('name')} [WARN] carry_to "
+                    f"'{carry_to}' is not the adjacent plain word; the carry is "
+                    f"written separately from the low word and is not atomic"
+                )
+        return atomic
 
     def start(self, base_address: int = 0, interval_sec: float = 1.0):
         interval_sec = float(interval_sec)
@@ -120,7 +170,8 @@ class ProfileUpdater:
 
             carry_to = profile.get("carry_to")
             if profile_type == "ramp" and carry_to:
-                val = self._apply_ramp_carry(
+                val, written = self._apply_ramp_carry(
+                    pin,
                     profile,
                     current_val,
                     val,
@@ -130,6 +181,8 @@ class ProfileUpdater:
                     default_register_type,
                     log_ctx,
                 )
+                if written:
+                    continue
 
             self.writer.write(pin, fx_code, addr, val, log_ctx)
 
@@ -141,6 +194,7 @@ class ProfileUpdater:
 
     def _apply_ramp_carry(
         self,
+        pin: dict,
         profile: dict,
         current_val: Any,
         val: float,
@@ -149,7 +203,9 @@ class ProfileUpdater:
         base_address: int,
         default_register_type: str,
         log_ctx: str,
-    ) -> float:
+    ) -> tuple[float, bool]:
+        """Return ``(low_word_value, written)``; ``written`` means this method
+        already wrote the low word (together with the carried word)."""
         try:
             step = float(profile.get("step", 1))
         except Exception:
@@ -168,7 +224,7 @@ class ProfileUpdater:
 
         wrapped, carry_count = ramp_wrap_and_carry(base_cv, step, min_v, max_v)
         if wrapped is None:
-            return val
+            return val, False
 
         if carry_count > 0:
             target_pin = next((p for p in pin_list if p.get("name") == carry_to), None)
@@ -184,13 +240,28 @@ class ProfileUpdater:
                     current_hi = 0
 
                 new_hi = (current_hi + carry_count) % 65536
+                key = (str(pin.get("name")), int(pin.get("offset", 0)))
+                if key in self.atomic_carry_pins:
+                    low_addr = base_address + int(pin.get("offset", 0))
+                    start = min(low_addr, target_addr)
+                    words = (
+                        [wrapped & 0xFFFF, new_hi]
+                        if low_addr < target_addr
+                        else [new_hi, wrapped & 0xFFFF]
+                    )
+                    self.context.setValues(fx_target, start, words)
+                    self._log(
+                        f"{log_ctx} raw={wrapped & 0xFFFF} [carry] "
+                        f"{carry_to}={new_hi} words@{start}={words}"
+                    )
+                    return wrapped, True
                 self.writer.write(
                     target_pin, fx_target, target_addr, new_hi, log_ctx + " [carry]"
                 )
             else:
                 self._log(f"{log_ctx} [WARN] carry_to target '{carry_to}' not found")
 
-        return wrapped
+        return wrapped, False
 
     def stop(self):
         self.running = False
