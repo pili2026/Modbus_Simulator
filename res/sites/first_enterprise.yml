@@ -3,6 +3,17 @@ devices:
     serial_port: /tmp/ttyV1
     slave_id: 1
     model_file: power_meter/adtek_cpm_10.yml
+    # Hourly kW schedule (minute of the hour -> kW from that minute on).
+    # 200 kW contract / 190 kW line: windows :00 and :30 average 198 kW and cross
+    # the line at minute 6; windows :15 and :45 average 150 kW.
+    load_schedule:
+      steps:
+        - {minute: 0, kw: 150}
+        - {minute: 6, kw: 230}
+        - {minute: 15, kw: 150}
+        - {minute: 30, kw: 150}
+        - {minute: 36, kw: 230}
+        - {minute: 45, kw: 150}
 
   - id: JY_DAM0816D
     serial_port: /tmp/ttyV1

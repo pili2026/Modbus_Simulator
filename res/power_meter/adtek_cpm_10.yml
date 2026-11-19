@@ -5,7 +5,10 @@ description: "ADtek CPM-10 Panel Meter (Simulator, builder-compatible)"
 
 pins:
   # -------------------- Energy (3-word big-endian) --------------------
-  # KWh @ 0/1/2: High two words fixed, low word slowly increasing, for ReadRegister3W_BE
+  # KWh @ 0/1/2: 48-bit big-endian W1·2^32 + W2·2^16 + W3, for ReadRegister3W_BE.
+  # The low word ramps and carries into the middle word at 65535, so the decoded
+  # counter never decreases. A site entry with `load_schedule` replaces this ramp
+  # (and the KW wave) with an hourly kW schedule; see docs/power_meter_load_schedule.md.
   - name: KWH_W1_HI
     offset: 0
     value: 0
@@ -19,7 +22,8 @@ pins:
       type: ramp
       step: 3       # Each tick +3 (driver’s EnergyIndex=3 → multiplier 0.1), equals about +0.3 kWh per tick
       min: 0
-      max: 65000
+      max: 65535
+      carry_to: KWH_W2_MD
 
   # Kvarh @ 3/4/5: Slower rate
   - name: KVARH_W1_HI
@@ -35,7 +39,8 @@ pins:
       type: ramp
       step: 1
       min: 0
-      max: 65000
+      max: 65535
+      carry_to: KVARH_W2_MD
 
   # -------------------- Averages --------------------
   # Average Voltage @ 6; driver applies VoltageIndex multiplier (set to 1.0 here)
