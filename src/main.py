@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import threading
 from collections import defaultdict
 from typing import Any
@@ -8,6 +9,7 @@ import yaml
 from pymodbus.datastore import ModbusServerContext
 from pymodbus.server import StartSerialServer
 
+from handler.load_schedule_handler import LoadScheduleConfigError
 from simulator.generic_simulator import GenericModbusSimulator
 from simulator.simulation_world import SimulationWorld
 
@@ -36,6 +38,9 @@ def load_simulation(
         model_config["device_id"] = f"{device_id}_{slave_id}"
         if "interval_sec" in device:
             model_config["interval_sec"] = device["interval_sec"]
+        # Per-instance opt-in: the site entry's block applies to this device only.
+        if "load_schedule" in device:
+            model_config["load_schedule"] = device["load_schedule"]
 
         simulator = GenericModbusSimulator(model_config)
         slave_context = simulator.build_context()
@@ -102,7 +107,13 @@ def main():
     )
 
     args = parser.parse_args()
-    port_slave_map, _world = load_simulation(args.config, args.model_dir, args.scenario)
+    try:
+        port_slave_map, _world = load_simulation(
+            args.config, args.model_dir, args.scenario
+        )
+    except LoadScheduleConfigError as exc:
+        print(f"[ERROR] invalid load_schedule: {exc}", file=sys.stderr, flush=True)
+        sys.exit(2)
 
     threads = []
     for port, slave_map in port_slave_map.items():

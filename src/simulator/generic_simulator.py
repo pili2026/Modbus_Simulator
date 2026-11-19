@@ -27,9 +27,13 @@ class GenericModbusSimulator:
         pins = self.config.get("pins", [])
         has_profiles = any(isinstance(p.get("profile"), dict) for p in pins)
 
-        should_start_updater = has_profiles or any(
-            (p.get("name", "").startswith("DOut") or p.get("bit") is not None)
-            for p in pins
+        should_start_updater = (
+            has_profiles
+            or "load_schedule" in self.config
+            or any(
+                (p.get("name", "").startswith("DOut") or p.get("bit") is not None)
+                for p in pins
+            )
         )
 
         if should_start_updater:

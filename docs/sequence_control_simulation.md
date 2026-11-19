@@ -78,6 +78,15 @@ FC2/FC3/FC4 points across several seconds and verify:
 - hold preserves external master writes;
 - `DIn16` changes every 0.5 s when sampled at 0.5 s or faster.
 
+## Power meter energy counters
+
+Ramp `carry_to` semantics (one overflow carries exactly 1), the CPM-10 48-bit
+counters, and the opt-in CPM-10 `load_schedule` hourly kW schedule used by
+`res/sites/first_enterprise.yml` are documented in
+[power_meter_load_schedule.md](power_meter_load_schedule.md).
+
+## Regression suite
+
 The no-socat regression suite is:
 
 ```bash
@@ -87,7 +96,7 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 It verifies profile compatibility, float LITTLE_SWAP round-trips, every YAML pin
 address get/set path, mixed register types, all 16 JY_DAM0816D discrete inputs,
 SUTO `FLOW_VALUE` initial float reading, delayed plant feedback, chiller unloading,
-and fault injection.
+fault injection, ramp carry counts, and the CPM-10 load schedule.
 
 ## Formatting
 
